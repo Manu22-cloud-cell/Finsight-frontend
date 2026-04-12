@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import SummaryCards from "../components/SummaryCards";
 import PredictionCard from "../components/PredictionCard";
+import CategoryChart from "../components/CategoryChart";
+import TrendChart from "../components/TrendChart";
+
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
@@ -28,6 +31,10 @@ const Dashboard = () => {
       <SummaryCards summary={data.summary} />
 
       <PredictionCard prediction={data.prediction} />
+
+      <CategoryChart data={data.categories} />
+
+      <TrendChart data={data.trends} />
     </div>
   );
 };
