@@ -34,7 +34,7 @@ const Login = () => {
 
             localStorage.setItem("token", res.data.token);
 
-            navigate("/dashboard");
+            navigate("/transactions");
         } catch (err) {
             console.error(err.response?.data || err.message);
             alert(err.response?.data?.error || "Login failed");

@@ -4,6 +4,7 @@ import Transactions from "./pages/Transactions";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
 import "./App.css";
 
 function App() {
@@ -20,7 +21,9 @@ function App() {
           path="/transactions"
           element={
             <ProtectedRoute>
-              <Transactions />
+              <Layout>
+                <Transactions />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -29,7 +32,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout>
+                <Dashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
