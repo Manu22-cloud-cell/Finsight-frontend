@@ -22,7 +22,7 @@ const TrendChart = ({ data }) => {
         <div className="card">
             <h3>📈 Monthly Trends</h3>
 
-            <LineChart width={600} height={300} data={chartData}>
+            <LineChart width={500} height={300} data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />

@@ -31,48 +31,51 @@ const Register = () => {
 
     return (
         <div className="container">
-            <h2>Register</h2>
+            <h2>Create Account 🚀</h2>
 
             <form onSubmit={handleRegister}>
+                <div className="form-group">
+                    <label>Name</label>
+                    <input
+                        type="text"
+                        placeholder="Your name"
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    />
+                </div>
 
-                <input
-                    type="text"
-                    placeholder="Name"
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                />
+                <div className="form-group">
+                    <label>Email</label>
+                    <input
+                        type="email"
+                        placeholder="Your email"
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    />
+                </div>
 
-                <br /><br />
+                <div className="form-group">
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    />
+                </div>
 
-                <input
-                    type="email"
-                    placeholder="Email"
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                />
-
-                <br /><br />
-
-                <input
-                    type="password"
-                    placeholder="Password"
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                />
-
-                <br /><br />
-
-                <input
-                    type="number"
-                    placeholder="Monthly Budget"
-                    onChange={(e) =>
-                        setForm({ ...form, monthlyBudget: e.target.value })
-                    }
-                />
-
-                <br /><br />
+                <div className="form-group">
+                    <label>Monthly Budget</label>
+                    <input
+                        type="number"
+                        placeholder="e.g. 50000"
+                        onChange={(e) =>
+                            setForm({ ...form, monthlyBudget: e.target.value })
+                        }
+                    />
+                </div>
 
                 <button type="submit">Register</button>
             </form>
 
-            <p>
+            <p style={{ textAlign: "center", marginTop: "15px" }}>
                 Already have an account? <Link to="/">Login</Link>
             </p>
         </div>

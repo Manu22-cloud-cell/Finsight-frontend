@@ -1,21 +1,21 @@
 const SummaryCards = ({ summary }) => {
   return (
-    <div className="flex">
+    <>
       <div className="card">
         <h3>💰 Income</h3>
-        <p>₹{summary.totalIncome}</p>
+        <p style={{ color: "green" }}>₹{summary.totalIncome}</p>
       </div>
 
       <div className="card">
         <h3>💸 Expense</h3>
-        <p>₹{summary.totalExpense}</p>
+        <p style={{ color: "red" }}>₹{summary.totalExpense}</p>
       </div>
 
       <div className="card">
         <h3>💳 Balance</h3>
-        <p>₹{summary.balance}</p>
+        <p style={{ color: "#2563eb" }}>₹{summary.balance}</p>
       </div>
-    </div>
+    </>
   );
 };
 

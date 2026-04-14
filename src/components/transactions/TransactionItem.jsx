@@ -15,15 +15,38 @@ const TransactionItem = ({ txn, onRefresh }) => {
   };
 
   return (
-    <div style={{ border: "1px solid gray", margin: "10px", padding: "10px" }}>
-      <p><b>{txn.type.toUpperCase()}</b></p>
-      <p>₹ {txn.amount}</p>
-      <p>{txn.category}</p>
-      <p>{txn.note}</p>
-      <p>{new Date(txn.date).toLocaleDateString()}</p>
+    <>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "12px",
+        borderBottom: "1px solid #eee"
+      }}>
+        <div>
+          <p style={{ margin: 0, fontWeight: "bold" }}>{txn.category}</p>
+          <small>{new Date(txn.date).toLocaleDateString()}</small>
+        </div>
 
-      <button onClick={() => setShowModal(true)}>Edit</button>
-      <button onClick={handleDelete}>Delete</button>
+        <div>
+          <p style={{
+            color: txn.type === "income" ? "green" : "red",
+            margin: 0,
+            fontWeight: "bold"
+          }}>
+            ₹ {txn.amount}
+          </p>
+        </div>
+
+        <div style={{ display: "flex", gap: "8px" }}>
+          <button style={{ width: "auto" }} onClick={() => setShowModal(true)}>
+            Edit
+          </button>
+
+          <button style={{ width: "auto" }} onClick={handleDelete}>
+            Delete
+          </button>
+        </div>
+      </div>
 
       {showModal && (
         <EditTransactionModal
@@ -32,7 +55,7 @@ const TransactionItem = ({ txn, onRefresh }) => {
           onSuccess={onRefresh}
         />
       )}
-    </div>
+    </>
   );
 };
 

@@ -21,7 +21,7 @@ const CategoryChart = ({ data }) => {
         <div className="card">
             <h3>📊 Category Breakdown</h3>
 
-            <PieChart width={400} height={300}>
+            <PieChart width={350} height={300}>
                 <Pie
                     data={chartData}
                     dataKey="value"

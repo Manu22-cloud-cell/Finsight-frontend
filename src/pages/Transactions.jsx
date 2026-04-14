@@ -22,19 +22,54 @@ const Transactions = () => {
   }, [filters]);
 
   return (
-    <div>
-      <h2>Transactions</h2>
+    <div style={styles.page}>
+      <h2>💸 Transactions</h2>
 
-      <TransactionForm onSuccess={fetchTransactions} />
+      <div style={styles.grid}>
+        <div style={styles.card}>
+          <h3>Add Transaction</h3>
+          <TransactionForm onSuccess={fetchTransactions} />
+        </div>
 
-      <TransactionFilters setFilters={setFilters} />
+        <div style={styles.card}>
+          <h3>Filters</h3>
+          <TransactionFilters setFilters={setFilters} />
+        </div>
+      </div>
 
-      <TransactionList
-        transactions={transactions}
-        onRefresh={fetchTransactions}
-      />
+      <div style={styles.listCard}>
+        <TransactionList
+          transactions={transactions}
+          onRefresh={fetchTransactions}
+        />
+      </div>
     </div>
   );
+};
+
+const styles = {
+  page: {
+    maxWidth: "1000px",
+    margin: "20px auto",
+  },
+  grid: {
+    display: "flex",
+    gap: "20px",
+    marginBottom: "20px",
+  },
+  card: {
+    flex: 1,
+    background: "#fff",
+    padding: "20px",
+    borderRadius: "10px",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+  },
+  listCard: {
+    background: "#fff",
+    padding: "20px",
+    borderRadius: "10px",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
+  },
 };
 
 export default Transactions;

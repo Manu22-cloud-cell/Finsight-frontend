@@ -25,16 +25,24 @@ const Dashboard = () => {
   if (!data) return <h2>Loading...</h2>;
 
   return (
-    <div className="container">
+    <div className="dashboard">
       <h1>📊 FinSight Dashboard</h1>
 
-      <SummaryCards summary={data.summary} />
+      {/* Summary Cards */}
+      <div className="grid grid-3">
+        <SummaryCards summary={data.summary} />
+      </div>
 
-      <PredictionCard prediction={data.prediction} />
+      {/* Prediction */}
+      <div style={{ marginTop: "20px" }}>
+        <PredictionCard prediction={data.prediction} />
+      </div>
 
-      <CategoryChart data={data.categories} />
-
-      <TrendChart data={data.trends} />
+      {/* Charts */}
+      <div className="grid grid-2" style={{ marginTop: "20px" }}>
+        <CategoryChart data={data.categories} />
+        <TrendChart data={data.trends} />
+      </div>
     </div>
   );
 };

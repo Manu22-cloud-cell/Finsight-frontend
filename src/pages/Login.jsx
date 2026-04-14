@@ -45,33 +45,35 @@ const Login = () => {
 
     return (
         <div className="container">
-            <h2>Login</h2>
+            <h2>Welcome Back 👋</h2>
 
             <form onSubmit={handleLogin}>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
+                <div className="form-group">
+                    <label>Email</label>
+                    <input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                </div>
 
-                <br /><br />
-
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-
-                <br /><br />
+                <div className="form-group">
+                    <label>Password</label>
+                    <input
+                        type="password"
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                </div>
 
                 <button type="submit" disabled={loading}>
                     {loading ? "Logging in..." : "Login"}
                 </button>
             </form>
 
-            <p>
+            <p style={{ textAlign: "center", marginTop: "15px" }}>
                 Don't have an account? <Link to="/register">Register</Link>
             </p>
         </div>

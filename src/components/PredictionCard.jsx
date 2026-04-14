@@ -3,12 +3,18 @@ const PredictionCard = ({ prediction }) => {
 
   return (
     <div className="card">
-      <h3>🔮 Prediction</h3>
-      <p>Predicted Expense: ₹{prediction.predictedExpense}</p>
-      <p>Daily Burn: ₹{prediction.dailyBurnRate}</p>
-      <p>Remaining Budget: ₹{prediction.remainingBudget}</p>
-      <p>Days Left: {prediction.daysToExhaustBudget}</p>
-      <p><strong>{prediction.message}</strong></p>
+      <h3>🔮 Smart Insights</h3>
+
+      <div style={{ display: "grid", gap: "8px" }}>
+        <p>Predicted Expense: ₹{prediction.predictedExpense}</p>
+        <p>Daily Burn: ₹{prediction.dailyBurnRate}</p>
+        <p>Remaining Budget: ₹{prediction.remainingBudget}</p>
+        <p>Days Left: {prediction.daysToExhaustBudget}</p>
+      </div>
+
+      <p style={{ marginTop: "10px", color: "#4CAF50" }}>
+        {prediction.message}
+      </p>
     </div>
   );
 };
