@@ -50,9 +50,13 @@ const Navbar = () => {
         <NavLink to="/dashboard" style={navLinkStyle}>
           Dashboard
         </NavLink>
+
+        <NavLink to="/reports" style={navLinkStyle} >
+          Reports
+        </NavLink>
       </div>
 
-      {/* 👇 USER DROPDOWN */}
+      {/* USER DROPDOWN */}
       <div style={styles.userSection} ref={dropdownRef}>
         <div
           style={styles.userInfo}

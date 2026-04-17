@@ -124,3 +124,55 @@ input:focus {
   font-size: 18px;
   font-weight: bold;
 }
+
+/* Table */
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.report-table th,
+.report-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.report-table th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+/* Badge */
+.badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge.income {
+  background: #e6f4ea;
+  color: #2e7d32;
+}
+
+.badge.expense {
+  background: #fdecea;
+  color: #c62828;
+}
+
+/* History */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  background: #f9fafb;
+  padding: 10px;
+  border-radius: 8px;
+}
