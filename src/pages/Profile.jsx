@@ -5,6 +5,7 @@ const Profile = () => {
   const [form, setForm] = useState({
     name: "",
     monthlyBudget: "",
+    email: "",
   });
 
   const [passwords, setPasswords] = useState({
@@ -12,10 +13,16 @@ const Profile = () => {
     newPassword: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
   const [preview, setPreview] = useState("");
 
-  // Fetch user
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const formatCurrency = (value) =>
+    `₹${Number(value || 0).toLocaleString("en-IN")}`;
+
   const fetchUser = async () => {
     try {
       const res = await API.get("/user/profile");
@@ -23,11 +30,12 @@ const Profile = () => {
       setForm({
         name: res.data.name,
         monthlyBudget: res.data.monthlyBudget,
+        email: res.data.email,
       });
 
       setPreview(
         res.data.profilePic ||
-          `https://ui-avatars.com/api/?name=${res.data.name}`
+        `https://ui-avatars.com/api/?name=${res.data.name}`
       );
     } catch (err) {
       console.error(err);
@@ -38,26 +46,26 @@ const Profile = () => {
     fetchUser();
   }, []);
 
-  // Handle form change
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle password change
   const handlePasswordChange = (e) => {
     setPasswords({ ...passwords, [e.target.name]: e.target.value });
   };
 
-  // Handle image select
   const handleImageChange = (e) => {
     const file = e.target.files[0];
+    if (!file) return;
+
     setProfilePic(file);
     setPreview(URL.createObjectURL(file));
   };
 
-  // Update profile
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     try {
       const formData = new FormData();
@@ -68,116 +76,232 @@ const Profile = () => {
         formData.append("profilePic", profilePic);
       }
 
-      await API.put("/user/profile", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await API.put("/user/profile", formData);
 
-      alert("Profile updated!");
+      setMessage("✅ Profile updated successfully");
       fetchUser();
     } catch (err) {
-      console.error(err);
-      alert("Update failed");
+      setMessage("❌ Update failed");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Change password
   const handleChangePassword = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
     try {
       await API.put("/user/password", passwords);
-      alert("Password updated!");
-
-      setPasswords({
-        oldPassword: "",
-        newPassword: "",
-      });
+      setMessage("✅ Password updated");
+      setPasswords({ oldPassword: "", newPassword: "" });
     } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.error || "Password update failed");
+      setMessage(err.response?.data?.error || "❌ Failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <h2>👤 Profile</h2>
+    <div className="dashboard">
+      <h2>👤 Profile Settings</h2>
 
-      {/* PROFILE CARD */}
-      <div style={styles.card}>
-        <img src={preview} alt="profile" style={styles.avatarLarge} />
+      <div className="grid grid-2" style={{ marginTop: "20px" }}>
 
-        <input type="file" onChange={handleImageChange} />
+        {/* PROFILE CARD */}
+        <div className="card" style={{ textAlign: "center" }}>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <img src={preview} alt="profile" style={styles.avatar} />
 
-        <form onSubmit={handleUpdateProfile}>
-          <label>Name</label>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-          />
+            <label style={styles.uploadBtn}>
+              📷
+              <input
+                type="file"
+                onChange={handleImageChange}
+                style={{ display: "none" }}
+              />
+            </label>
+          </div>
 
-          <label>Monthly Budget</label>
-          <input
-            type="number"
-            name="monthlyBudget"
-            value={form.monthlyBudget}
-            onChange={handleChange}
-          />
+          <form onSubmit={handleUpdateProfile} style={styles.form}>
 
-          <button type="submit">Update Profile</button>
-        </form>
+            <div style={styles.field}>
+              <label style={styles.label}>Name</label>
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                style={styles.input}
+              />
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Email</label>
+              <input value={form.email} disabled style={styles.input} />
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Monthly Budget</label>
+              <input
+                type="number"
+                name="monthlyBudget"
+                value={form.monthlyBudget}
+                onChange={handleChange}
+                style={styles.input}
+              />
+              <p style={styles.helper}>
+                Current: {formatCurrency(form.monthlyBudget)}
+              </p>
+            </div>
+
+            <button style={styles.button} disabled={loading}>
+              {loading ? "Updating..." : "Update Profile"}
+            </button>
+          </form>
+        </div>
+
+        {/* PASSWORD CARD */}
+        <div className="card">
+          <h3>🔐 Change Password</h3>
+
+          <form onSubmit={handleChangePassword} style={styles.form}>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Old Password</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="oldPassword"
+                value={passwords.oldPassword}
+                onChange={handlePasswordChange}
+                style={styles.input}
+              />
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>New Password</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="newPassword"
+                value={passwords.newPassword}
+                onChange={handlePasswordChange}
+                style={styles.input}
+              />
+            </div>
+
+            {/* Checkbox aligned */}
+            <div style={styles.checkboxWrapper}>
+              <input
+                type="checkbox"
+                id="showPassword"
+                checked={showPassword}
+                onChange={() => setShowPassword(!showPassword)}
+                style={styles.checkbox}
+              />
+              <label htmlFor="showPassword" style={styles.checkboxLabel}>
+                Show Password
+              </label>
+            </div>
+
+            <button style={styles.button} disabled={loading}>
+              {loading ? "Updating..." : "Change Password"}
+            </button>
+          </form>
+        </div>
       </div>
 
-      {/* PASSWORD CARD */}
-      <div style={styles.card}>
-        <h3>🔐 Change Password</h3>
-
-        <form onSubmit={handleChangePassword}>
-          <label>Old Password</label>
-          <input
-            type="password"
-            name="oldPassword"
-            value={passwords.oldPassword}
-            onChange={handlePasswordChange}
-          />
-
-          <label>New Password</label>
-          <input
-            type="password"
-            name="newPassword"
-            value={passwords.newPassword}
-            onChange={handlePasswordChange}
-          />
-
-          <button type="submit">Change Password</button>
-        </form>
-      </div>
+      {message && (
+        <p style={{ marginTop: "15px", textAlign: "center" }}>
+          {message}
+        </p>
+      )}
     </div>
   );
 };
 
 const styles = {
-  container: {
-    maxWidth: "600px",
-    margin: "20px auto",
-  },
-
-  card: {
-    background: "#fff",
-    padding: "20px",
-    borderRadius: "10px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.1)",
-    marginBottom: "20px",
-  },
-
-  avatarLarge: {
-    width: "100px",
-    height: "100px",
+  avatar: {
+    width: "110px",
+    height: "110px",
     borderRadius: "50%",
     objectFit: "cover",
-    marginBottom: "10px",
+  },
+
+  uploadBtn: {
+    position: "absolute",
+    bottom: "0",
+    right: "0",
+    background: "#2563eb",
+    color: "#fff",
+    borderRadius: "50%",
+    padding: "6px",
+    cursor: "pointer",
+    fontSize: "12px",
+  },
+
+  form: {
+    marginTop: "20px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "18px",
+    textAlign: "left",
+  },
+
+  field: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    paddingRight: "4px", 
+  },
+
+  label: {
+    fontSize: "13px",
+    fontWeight: "500",
+    color: "#555",
+  },
+
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: "6px",
+    border: "1px solid #ddd",
+    boxSizing: "border-box", 
+  },
+
+  helper: {
+    fontSize: "12px",
+    color: "#777",
+  },
+
+  checkboxWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    marginTop: "4px",
+  },
+
+  checkbox: {
+    margin: 0,
+    width: "14px",
+    height: "14px",
+    cursor: "pointer",
+  },
+
+  checkboxLabel: {
+    fontSize: "13px",
+    color: "#555",
+    cursor: "pointer",
+    lineHeight: "1",
+  },
+
+  button: {
+    padding: "10px",
+    border: "none",
+    borderRadius: "6px",
+    background: "#2563eb",
+    color: "#fff",
+    cursor: "pointer",
+    marginTop: "6px",
   },
 };
 
