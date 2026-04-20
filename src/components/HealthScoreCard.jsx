@@ -1,18 +1,38 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const HealthScoreCard = ({ score = 0, insights = [] }) => {
+    const [animatedScore, setAnimatedScore] = useState(0);
+
+    useEffect(() => {
+        let start = 0;
+        const duration = 800;
+        const increment = score / (duration / 16);
+
+        const animate = () => {
+            start += increment;
+            if (start < score) {
+                setAnimatedScore(Math.floor(start));
+                requestAnimationFrame(animate);
+            } else {
+                setAnimatedScore(score);
+            }
+        };
+
+        animate();
+    }, [score]);
+
     const radius = 70;
     const stroke = 10;
     const normalizedRadius = radius - stroke * 0.5;
     const circumference = normalizedRadius * 2 * Math.PI;
 
-    const progress = score / 100;
+    const progress = animatedScore / 100;
     const strokeDashoffset = circumference - progress * circumference;
 
     const getColor = () => {
-        if (score >= 80) return "#16a34a"; // green
-        if (score >= 50) return "#f59e0b"; // yellow
-        return "#dc2626"; // red
+        if (score >= 80) return "#16a34a";
+        if (score >= 50) return "#f59e0b";
+        return "#dc2626";
     };
 
     const getStatus = () => {
@@ -21,15 +41,17 @@ const HealthScoreCard = ({ score = 0, insights = [] }) => {
         return "Risky 🚨";
     };
 
+    const color = getColor();
+
     return (
         <div className="card" style={{ textAlign: "center" }}>
             <h3>💡 Financial Health Score</h3>
 
-            {/* 🔥 Circular Progress */}
+            {/* Circle */}
             <div style={{ display: "flex", justifyContent: "center", margin: "20px 0" }}>
                 <svg height={radius * 2} width={radius * 2}>
 
-                    {/* Background circle */}
+                    {/* Background */}
                     <circle
                         stroke="#e5e7eb"
                         fill="transparent"
@@ -39,9 +61,9 @@ const HealthScoreCard = ({ score = 0, insights = [] }) => {
                         cy={radius}
                     />
 
-                    {/* Progress circle */}
+                    {/* Progress */}
                     <circle
-                        stroke={getColor()}
+                        stroke={color}
                         fill="transparent"
                         strokeWidth={stroke}
                         strokeLinecap="round"
@@ -57,7 +79,7 @@ const HealthScoreCard = ({ score = 0, insights = [] }) => {
                         transform={`rotate(-90 ${radius} ${radius})`}
                     />
 
-                    {/* Score text */}
+                    {/* Score */}
                     <text
                         x="50%"
                         y="50%"
@@ -65,23 +87,55 @@ const HealthScoreCard = ({ score = 0, insights = [] }) => {
                         textAnchor="middle"
                         fontSize="22"
                         fontWeight="bold"
-                        fill={getColor()}
+                        fill={color}
                     >
-                        {score}
+                        {animatedScore}
+                    </text>
+
+                    {/* /100 label */}
+                    <text
+                        x="50%"
+                        y="65%"
+                        dominantBaseline="middle"
+                        textAnchor="middle"
+                        fontSize="10"
+                        fill="#888"
+                    >
+                        /100
                     </text>
 
                 </svg>
             </div>
 
-            {/* Status */}
-            <p style={{ fontWeight: "bold", marginBottom: "10px" }}>
+            {/* Status Badge */}
+            <div
+                style={{
+                    display: "inline-block",
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    backgroundColor: `${color}20`,
+                    color: color,
+                    fontWeight: "600",
+                    fontSize: "12px",
+                    marginBottom: "12px",
+                }}
+            >
                 {getStatus()}
-            </p>
+            </div>
 
             {/* Insights */}
-            <div style={{ fontSize: "14px", color: "#6b7280" }}>
+            <div
+                style={{
+                    fontSize: "14px",
+                    color: "#6b7280",
+                    textAlign: "left",
+                    marginTop: "10px",
+                }}
+            >
                 {insights?.map((insight, index) => (
-                    <p key={index}>{insight}</p>
+                    <p key={index} style={{ marginBottom: "6px" }}>
+                        👉 {insight}
+                    </p>
                 ))}
             </div>
         </div>
