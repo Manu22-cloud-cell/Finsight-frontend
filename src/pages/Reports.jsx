@@ -19,6 +19,9 @@ const Reports = () => {
         "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
+    const formatCurrency = (value) =>
+        `₹${(value || 0).toLocaleString("en-IN")}`;
+
     const fetchReports = async () => {
         try {
             setLoading(true);
@@ -77,32 +80,29 @@ const Reports = () => {
 
     useEffect(() => {
         fetchReports();
-        fetchHistory();
         fetchCategoryData();
     }, [type, date, month, year]);
 
+    useEffect(() => {
+        fetchHistory();
+    }, []);
+
     return (
         <div className="dashboard">
-
             <h2>📊 Reports</h2>
 
-            {/* Filters + Actions */}
+            {/* Filters */}
             <div className="card">
                 <h3>Generate Report</h3>
 
-                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
 
-                    <select
-                        value={type}
-                        onChange={(e) => setType(e.target.value)}
-                        style={{ flex: 1 }}
-                    >
+                    <select value={type} onChange={(e) => setType(e.target.value)}>
                         <option value="daily">Daily</option>
                         <option value="monthly">Monthly</option>
                         <option value="yearly">Yearly</option>
                     </select>
 
-                    {/* Dynamic Filters */}
                     {type === "daily" && (
                         <input
                             type="date"
@@ -113,15 +113,15 @@ const Reports = () => {
 
                     {type === "monthly" && (
                         <>
+                            <select value={month} onChange={(e) => setMonth(e.target.value)}>
+                                <option value="">Select Month</option>
+                                {monthNames.map((m, i) => (
+                                    <option key={i} value={i + 1}>{m}</option>
+                                ))}
+                            </select>
+
                             <input
                                 type="number"
-                                placeholder="Month (1-12)"
-                                value={month}
-                                onChange={(e) => setMonth(e.target.value)}
-                            />
-                            <input
-                                type="number"
-                                placeholder="Year"
                                 value={year}
                                 onChange={(e) => setYear(e.target.value)}
                             />
@@ -131,72 +131,71 @@ const Reports = () => {
                     {type === "yearly" && (
                         <input
                             type="number"
-                            placeholder="Year"
                             value={year}
                             onChange={(e) => setYear(e.target.value)}
                         />
                     )}
 
-                    <button onClick={fetchReports} style={{ width: "150px" }}>
-                        Fetch
-                    </button>
-
-                    <button onClick={downloadReport} style={{ width: "180px" }}>
-                        Download CSV
-                    </button>
-
+                    <button onClick={fetchReports}>🔍 Fetch</button>
+                    <button onClick={downloadReport}>⬇️ Download CSV</button>
                 </div>
             </div>
 
-            {/* Subtotal */}
-
+            {/* Totals */}
             <div className="grid grid-3" style={{ marginTop: "20px" }}>
                 <div className="card">
-                    <h3>Total Income</h3>
-                    <p>₹{totals.totalIncome || 0}</p>
+                    <p style={{ fontSize: "12px", color: "#777" }}>💰 Total Income</p>
+                    <h2 style={{ color: "#2e7d32" }}>
+                        {formatCurrency(totals.totalIncome)}
+                    </h2>
                 </div>
 
                 <div className="card">
-                    <h3>Total Expense</h3>
-                    <p>₹{totals.totalExpense || 0}</p>
+                    <p style={{ fontSize: "12px", color: "#777" }}>💸 Total Expense</p>
+                    <h2 style={{ color: "#c62828" }}>
+                        {formatCurrency(totals.totalExpense)}
+                    </h2>
                 </div>
 
                 <div className="card">
-                    <h3>Balance</h3>
-                    <p>₹{totals.balance || 0}</p>
+                    <p style={{ fontSize: "12px", color: "#777" }}>💳 Balance</p>
+                    <h2 style={{
+                        color: totals.balance < 0 ? "#c62828" : "#2e7d32"
+                    }}>
+                        {formatCurrency(totals.balance)}
+                    </h2>
                 </div>
             </div>
 
+            {/* Charts */}
             <div className="grid grid-2" style={{ marginTop: "20px" }}>
-
-                {/* Category Chart (Filtered) */}
                 <CategoryChart data={categoryData} />
 
-                {/* Yearly Chart ONLY for yearly */}
                 {type === "yearly" && (
                     <TrendChart
                         data={Object.fromEntries(
                             data.map((item) => [
-                                `Month ${item.month}`,
+                                monthNames[item.month - 1],
                                 { income: item.income, expense: item.expense },
                             ])
                         )}
                     />
                 )}
-
             </div>
 
-            {/* Report Table */}
+            {/* Table */}
             <div className="card">
                 <h3>Report Data</h3>
 
                 {loading ? (
-                    <p>Loading...</p>
+                    <p style={{ textAlign: "center", padding: "20px" }}>
+                        ⏳ Fetching report...
+                    </p>
                 ) : data.length === 0 ? (
-                    <p>No data found</p>
+                    <p style={{ textAlign: "center", padding: "20px", color: "#777" }}>
+                        📭 No data found for selected filters
+                    </p>
                 ) : type === "yearly" ? (
-
-                    // ✅ Yearly Table
                     <table className="report-table">
                         <thead>
                             <tr>
@@ -210,24 +209,27 @@ const Reports = () => {
                             {data.map((item, index) => (
                                 <tr key={index}>
                                     <td>{monthNames[item.month - 1]}</td>
-                                    <td>₹{item.income}</td>
-                                    <td>₹{item.expense}</td>
-                                    <td>₹{item.income - item.expense}</td>
+                                    <td style={{ color: "#2e7d32" }}>
+                                        {formatCurrency(item.income)}
+                                    </td>
+                                    <td style={{ color: "#c62828" }}>
+                                        {formatCurrency(item.expense)}
+                                    </td>
+                                    <td style={{ fontWeight: "500" }}>
+                                        {formatCurrency(item.income - item.expense)}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-
                 ) : (
-
-                    // ✅ Daily / Monthly Table
                     <table className="report-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
                                 <th>Type</th>
                                 <th>Category</th>
-                                <th>Amount</th>
+                                <th style={{ textAlign: "right" }}>Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -235,23 +237,21 @@ const Reports = () => {
                                 <tr key={index}>
                                     <td>{new Date(item.date).toLocaleDateString()}</td>
                                     <td>
-                                        <span
-                                            className={
-                                                item.type === "income"
-                                                    ? "badge income"
-                                                    : "badge expense"
-                                            }
-                                        >
+                                        <span className={item.type === "income" ? "badge income" : "badge expense"}>
                                             {item.type}
                                         </span>
                                     </td>
                                     <td>{item.category}</td>
-                                    <td>₹{item.amount}</td>
+                                    <td style={{
+                                        textAlign: "right",
+                                        color: item.type === "income" ? "#2e7d32" : "#c62828"
+                                    }}>
+                                        {formatCurrency(item.amount)}
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-
                 )}
             </div>
 
@@ -277,7 +277,6 @@ const Reports = () => {
                     </div>
                 )}
             </div>
-
         </div>
     );
 };
