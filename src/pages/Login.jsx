@@ -5,93 +5,191 @@ import API from "../services/api";
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [hover, setHover] = useState(false);
 
     const navigate = useNavigate();
 
     useEffect(() => {
         const token = localStorage.getItem("token");
-        if (token) {
-            navigate("/transactions");
-        }
+        if (token) navigate("/transactions");
     }, [navigate]);
 
     const handleLogin = async (e) => {
-    e.preventDefault();
+        e.preventDefault();
+        setError("");
 
-    if (!email || !password) {
-        alert("Please enter email and password");
-        return;
-    }
+        if (!email || !password) {
+            return setError("Please fill all fields");
+        }
 
-    try {
-        setLoading(true);
+        try {
+            setLoading(true);
 
-        const res = await API.post("/auth/login", {
-            email,
-            password,
-        });
+            const res = await API.post("/auth/login", { email, password });
 
-        console.log("Login response:", res.data);
+            localStorage.setItem("token", res.data.token);
+            localStorage.setItem("user", JSON.stringify(res.data.user));
 
-        // Store token
-        localStorage.setItem("token", res.data.token);
-
-        // Store user (FIX)
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-
-        // Debug check
-        console.log(
-          "Saved user:",
-          JSON.parse(localStorage.getItem("user"))
-        );
-
-        // Force reload (ensures Layout runs with data)
-        window.location.href = "/transactions";
-
-    } catch (err) {
-        console.error(err.response?.data || err.message);
-        alert(err.response?.data?.error || "Login failed");
-    } finally {
-        setLoading(false);
-    }
-};
+            window.location.href = "/transactions";
+        } catch (err) {
+            setError(err.response?.data?.error || "Login failed");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
-        <div className="container">
-            <h2>Welcome Back 👋</h2>
+        <div style={styles.wrapper}>
+            <div style={styles.card}>
+                <h2 style={styles.title}>Welcome Back 👋</h2>
 
-            <form onSubmit={handleLogin}>
-                <div className="form-group">
-                    <label>Email</label>
-                    <input
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
-                </div>
+                {error && <p style={styles.error}>{error}</p>}
 
-                <div className="form-group">
-                    <label>Password</label>
-                    <input
-                        type="password"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
-                </div>
+                <form onSubmit={handleLogin} style={styles.form}>
 
-                <button type="submit" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
-                </button>
-            </form>
+                    <div style={styles.field}>
+                        <label>Email</label>
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            style={styles.input}
+                        />
+                    </div>
 
-            <p style={{ textAlign: "center", marginTop: "15px" }}>
-                Don't have an account? <Link to="/register">Register</Link>
-            </p>
+                    <div style={styles.field}>
+                        <label>Password</label>
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            style={styles.input}
+                        />
+                    </div>
+
+                    <div style={styles.checkboxWrapper}>
+                        <input
+                            type="checkbox"
+                            id="showPassword"
+                            checked={showPassword}
+                            onChange={() => setShowPassword(!showPassword)}
+                            style={styles.checkbox}
+                        />
+                        <label htmlFor="showPassword" style={styles.checkboxLabel}>
+                            Show Password
+                        </label>
+                    </div>
+
+                    <button
+                        style={{
+                            ...styles.button,
+                            background: hover ? "#1d4ed8" : "#2563eb",
+                            transform: hover ? "translateY(-1px)" : "translateY(0)",
+                            boxShadow: hover
+                                ? "0 6px 12px rgba(0,0,0,0.15)"
+                                : "0 2px 6px rgba(0,0,0,0.1)",
+                        }}
+                        onMouseEnter={() => setHover(true)}
+                        onMouseLeave={() => setHover(false)}
+                        disabled={loading}
+                    >
+                        {loading ? "Loading..." : "Login"}
+                    </button>
+                </form>
+
+                <p style={styles.footer}>
+                    Don't have an account? <Link to="/register">Register</Link>
+                </p>
+            </div>
         </div>
     );
+};
+
+const styles = {
+    wrapper: {
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "#f3f4f6",
+    },
+    card: {
+        width: "350px",
+        padding: "25px",
+        borderRadius: "12px",
+        background: "#fff",
+        boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+    },
+    title: {
+        textAlign: "center",
+        marginBottom: "15px",
+    },
+    form: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "15px",
+    },
+    field: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "5px",
+    },
+    input: {
+        padding: "10px",
+        borderRadius: "6px",
+        border: "1px solid #ddd",
+        boxSizing: "border-box",
+    },
+    checkboxRow: {
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        fontSize: "13px",
+    },
+    button: {
+        padding: "10px",
+        border: "none",
+        borderRadius: "6px",
+        background: "#2563eb",
+        color: "#fff",
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+    },
+    error: {
+        color: "#dc2626",
+        fontSize: "13px",
+        marginBottom: "5px",
+    },
+    footer: {
+        textAlign: "center",
+        marginTop: "15px",
+        fontSize: "14px",
+    },
+    checkboxWrapper: {
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        marginTop: "2px",
+    },
+
+    checkbox: {
+        margin: 0,
+        width: "14px",
+        height: "14px",
+        cursor: "pointer",
+    },
+
+    checkboxLabel: {
+        fontSize: "13px",
+        color: "#555",
+        cursor: "pointer",
+        lineHeight: "1",
+    },
 };
 
 export default Login;

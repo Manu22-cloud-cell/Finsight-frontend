@@ -13,7 +13,6 @@ const Navbar = () => {
     navigate("/");
   };
 
-  // Fetch user profile
   const fetchUser = async () => {
     try {
       const res = await API.get("/user/profile");
@@ -27,7 +26,7 @@ const Navbar = () => {
     fetchUser();
   }, []);
 
-  // Close dropdown on outside click
+  // Close dropdown
   useEffect(() => {
     const handler = (e) => {
       if (!dropdownRef.current?.contains(e.target)) {
@@ -40,8 +39,12 @@ const Navbar = () => {
 
   return (
     <div style={styles.nav}>
-      <h2 style={styles.logo}>FinSight</h2>
+      {/* LOGO */}
+      <h2 style={styles.logo} onClick={() => navigate("/dashboard")}>
+        FinSight
+      </h2>
 
+      {/* NAV LINKS */}
       <div style={styles.links}>
         <NavLink to="/transactions" style={navLinkStyle}>
           Transactions
@@ -51,12 +54,12 @@ const Navbar = () => {
           Dashboard
         </NavLink>
 
-        <NavLink to="/reports" style={navLinkStyle} >
+        <NavLink to="/reports" style={navLinkStyle}>
           Reports
         </NavLink>
       </div>
 
-      {/* USER DROPDOWN */}
+      {/* USER */}
       <div style={styles.userSection} ref={dropdownRef}>
         <div
           style={styles.userInfo}
@@ -70,23 +73,36 @@ const Navbar = () => {
             alt="avatar"
             style={styles.avatar}
           />
-          <span>{user?.name || "User"}</span>
+          <span style={styles.userName}>
+            {user?.name || "User"}
+          </span>
         </div>
 
         {open && (
           <div style={styles.dropdown}>
+            {/* HEADER */}
+            <div style={styles.dropdownHeader}>
+              <p style={styles.dropdownName}>{user?.name}</p>
+              <p style={styles.dropdownEmail}>{user?.email}</p>
+            </div>
+
+            {/* ITEMS */}
             <div
               style={styles.dropdownItem}
               onClick={() => navigate("/profile")}
+              onMouseEnter={(e) => (e.target.style.background = "#f3f4f6")}
+              onMouseLeave={(e) => (e.target.style.background = "transparent")}
             >
-              Profile
+              👤 Profile
             </div>
 
             <div
-              style={{ ...styles.dropdownItem, color: "red" }}
+              style={{ ...styles.dropdownItem, color: "#dc2626" }}
               onClick={handleLogout}
+              onMouseEnter={(e) => (e.target.style.background = "#f3f4f6")}
+              onMouseLeave={(e) => (e.target.style.background = "transparent")}
             >
-              Logout
+              🚪 Logout
             </div>
           </div>
         )}
@@ -95,15 +111,18 @@ const Navbar = () => {
   );
 };
 
-// Active link styling
+// NavLink styling
 const navLinkStyle = ({ isActive }) => ({
-  color: isActive ? "#4CAF50" : "#ffffff",
+  color: isActive ? "#4ade80" : "#e5e7eb",
   textDecoration: "none",
-  fontWeight: isActive ? "bold" : "normal",
-  borderBottom: isActive ? "2px solid #4CAF50" : "none",
-  paddingBottom: "2px",
+  fontWeight: 500,
+  position: "relative",
+  paddingBottom: "4px",
+  borderBottom: isActive ? "2px solid #4ade80" : "2px solid transparent",
+  transition: "all 0.2s ease",
 });
 
+// Styles
 const styles = {
   nav: {
     display: "flex",
@@ -113,9 +132,13 @@ const styles = {
     background: "#1f2937",
     color: "#fff",
   },
+
   logo: {
     margin: 0,
+    cursor: "pointer",
+    fontWeight: "bold",
   },
+
   links: {
     display: "flex",
     gap: "25px",
@@ -131,31 +154,56 @@ const styles = {
     alignItems: "center",
     gap: "10px",
     cursor: "pointer",
+    padding: "6px 10px",
+    borderRadius: "6px",
+    transition: "background 0.2s",
+  },
+
+  userName: {
+    fontSize: "14px",
+    fontWeight: 500,
   },
 
   avatar: {
-    width: "32px",
-    height: "32px",
+    width: "34px",
+    height: "34px",
     borderRadius: "50%",
     objectFit: "cover",
   },
 
   dropdown: {
     position: "absolute",
-    top: "40px",
+    top: "45px",
     right: 0,
     background: "#fff",
     color: "#000",
-    borderRadius: "8px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
+    borderRadius: "10px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+    minWidth: "180px",
     overflow: "hidden",
-    minWidth: "150px",
+  },
+
+  dropdownHeader: {
+    padding: "12px",
+    borderBottom: "1px solid #eee",
+  },
+
+  dropdownName: {
+    margin: 0,
+    fontWeight: "600",
+  },
+
+  dropdownEmail: {
+    margin: 0,
+    fontSize: "12px",
+    color: "#777",
   },
 
   dropdownItem: {
-    padding: "10px",
+    padding: "10px 12px",
     cursor: "pointer",
-    borderBottom: "1px solid #eee",
+    fontSize: "14px",
+    transition: "background 0.2s",
   },
 };
 
