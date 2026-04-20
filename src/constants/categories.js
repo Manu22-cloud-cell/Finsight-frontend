@@ -1,0 +1,33 @@
+export const expenseCategories = [
+  "🍔 Food & Dining",
+  "🛒 Groceries",
+  "🚗 Transportation",
+  "⛽ Fuel",
+  "🏠 Rent",
+  "💡 Utilities",
+  "📱 Mobile & Internet",
+  "🎬 Entertainment",
+  "🛍 Shopping",
+  "🏥 Healthcare",
+  "💊 Medicines",
+  "🎓 Education",
+  "✈️ Travel",
+  "🎁 Gifts",
+  "🐶 Pets",
+  "💼 Personal Care",
+  "🏋️ Fitness",
+  "📊 Subscriptions",
+  "🔧 Maintenance",
+  "📌 Others",
+];
+
+export const incomeCategories = [
+  "💼 Salary",
+  "💻 Freelance",
+  "📈 Investments",
+  "🏦 Interest",
+  "🎁 Gifts Received",
+  "🏆 Bonus",
+  "📊 Business",
+  "📌 Others",
+];

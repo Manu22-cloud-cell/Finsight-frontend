@@ -1,17 +1,27 @@
 import { useState } from "react";
 import API from "../../services/api";
+import { expenseCategories, incomeCategories } from "../../constants/categories";
 
 const TransactionForm = ({ onSuccess }) => {
+
+  const getToday = () => new Date().toISOString().split("T")[0];
+
   const [form, setForm] = useState({
     type: "expense",
     amount: "",
     category: "",
     note: "",
-    date: "",
+    date: getToday(),
   });
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "type") {
+      setForm({ ...form, type: value, category: "" });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -26,7 +36,7 @@ const TransactionForm = ({ onSuccess }) => {
         amount: "",
         category: "",
         note: "",
-        date: "",
+        date: getToday(),
       });
     } catch (err) {
       console.error(err);
@@ -34,36 +44,59 @@ const TransactionForm = ({ onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <select name="type" value={form.type} onChange={handleChange}>
-        <option value="income">Income</option>
-        <option value="expense">Expense</option>
+    <form onSubmit={handleSubmit} style={styles.form}>
+
+      <select
+        name="type"
+        value={form.type}
+        onChange={handleChange}
+        style={styles.input}
+      >
+        <option value="expense">💸 Expense</option>
+        <option value="income">💰 Income</option>
       </select>
 
       <input
         type="number"
         name="amount"
-        placeholder="Amount"
+        placeholder="Enter amount (₹)"
         value={form.amount}
         onChange={handleChange}
         required
+        style={styles.input}
       />
 
-      <input
-        type="text"
+      <select
         name="category"
-        placeholder="Category"
         value={form.category}
         onChange={handleChange}
         required
-      />
+        style={styles.input}
+      >
+        <option value="">
+          {form.type === "income"
+            ? "Select income source (e.g. Salary)"
+            : "Select expense category (e.g. Food, Rent)"}
+        </option>
+
+        {(form.type === "income" ? incomeCategories : expenseCategories).map((cat) => (
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
+        ))}
+      </select>
 
       <input
         type="text"
         name="note"
-        placeholder="Note"
+        placeholder={
+          form.type === "income"
+            ? "Add note (e.g. Freelance project)"
+            : "Add note (e.g. Dinner with friends)"
+        }
         value={form.note}
         onChange={handleChange}
+        style={styles.input}
       />
 
       <input
@@ -71,11 +104,47 @@ const TransactionForm = ({ onSuccess }) => {
         name="date"
         value={form.date}
         onChange={handleChange}
+        style={styles.input}
       />
 
-      <button type="submit">Add</button>
+      <button
+        type="submit"
+        style={styles.button}
+        onMouseOver={(e) => (e.target.style.background = "#45a049")}
+        onMouseOut={(e) => (e.target.style.background = "#4CAF50")}
+      >
+        ➕ Add Transaction
+      </button>
+
     </form>
   );
 };
 
+const styles = {
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+    boxSizing: "border-box",
+  },
+
+  button: {
+    marginTop: "5px",
+    padding: "12px",
+    borderRadius: "6px",
+    border: "none",
+    background: "#4CAF50",
+    color: "#fff",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+};
 export default TransactionForm;

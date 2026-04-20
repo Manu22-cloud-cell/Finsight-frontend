@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import API from "../../services/api";
+import { expenseCategories, incomeCategories } from "../../constants/categories";
 
 const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
   const [form, setForm] = useState({
@@ -9,6 +10,8 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
     note: "",
     date: "",
   });
+
+  const [cancelHover, setCancelHover] = useState(false);
 
   // Pre-fill data
   useEffect(() => {
@@ -40,12 +43,17 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
   };
 
   return (
-    <div style={styles.overlay}>
-      <div style={styles.modal}>
+    <div style={styles.overlay} onClick={onClose}>
+      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <h3>Edit Transaction</h3>
 
-        <form onSubmit={handleSubmit}>
-          <select name="type" value={form.type} onChange={handleChange}>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <select
+            name="type"
+            value={form.type}
+            onChange={handleChange}
+            style={styles.input}
+          >
             <option value="income">Income</option>
             <option value="expense">Expense</option>
           </select>
@@ -56,21 +64,31 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
             value={form.amount}
             onChange={handleChange}
             required
+            style={styles.input}
           />
 
-          <input
-            type="text"
+          <select
             name="category"
             value={form.category}
             onChange={handleChange}
             required
-          />
+            style={styles.input}
+          >
+            <option value="">Select Category</option>
+            {(form.type === "income" ? incomeCategories : expenseCategories).map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
 
           <input
             type="text"
             name="note"
             value={form.note}
             onChange={handleChange}
+            placeholder="Note"
+            style={styles.input}
           />
 
           <input
@@ -78,11 +96,31 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
             name="date"
             value={form.date}
             onChange={handleChange}
+            style={styles.input}
           />
 
           <div style={styles.actions}>
-            <button type="submit">Update</button>
-            <button type="button" onClick={onClose}>Cancel</button>
+            <button
+              type="submit"
+              style={styles.updateBtn}
+              onMouseOver={(e) => (e.target.style.background = "#45a049")}
+              onMouseOut={(e) => (e.target.style.background = "#4CAF50")}
+            >
+              ✅ Update
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                ...styles.cancelBtn,
+                background: cancelHover ? "#b91c1c" : "#ef4444",
+              }}
+              onMouseEnter={() => setCancelHover(true)}
+              onMouseLeave={() => setCancelHover(false)}
+            >
+              Cancel
+            </button>
           </div>
         </form>
       </div>
@@ -92,26 +130,68 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
 
 const styles = {
   overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background: "rgba(0,0,0,0.5)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  background: "rgba(0,0,0,0.5)",
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  zIndex: 9999, 
+},
+
   modal: {
     background: "#fff",
-    padding: "20px",
-    borderRadius: "10px",
-    width: "300px",
+    padding: "25px",             
+    borderRadius: "12px",
+    width: "350px",              
+    boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
   },
-  actions: {
-    marginTop: "10px",
+
+  form: {
     display: "flex",
-    justifyContent: "space-between",
+    flexDirection: "column",
+    gap: "12px",                
+    marginTop: "10px",
+  },
+
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    fontSize: "14px",
+    boxSizing: "border-box",     
+  },
+
+  actions: {
+    display: "flex",
+    gap: "10px",
+    marginTop: "10px",
+  },
+
+  updateBtn: {
+    flex: 1,
+    padding: "10px",
+    borderRadius: "6px",
+    border: "none",
+    background: "#4CAF50",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
+
+  cancelBtn: {
+    flex: 1,
+    padding: "10px",
+    borderRadius: "6px",
+    border: "none",
+    background: "#ef4444",
+    color: "#fff",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
   },
 };
 
