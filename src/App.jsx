@@ -7,6 +7,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
 import Profile from "./pages/Profile";
 import Reports from "./pages/Reports";
+import Alerts from "./pages/Alerts";
 import "./App.css";
 
 function App() {
@@ -58,6 +59,17 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Reports />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/alerts"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Alerts />
               </Layout>
             </ProtectedRoute>
           }

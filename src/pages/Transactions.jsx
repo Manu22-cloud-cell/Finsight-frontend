@@ -11,6 +11,8 @@ const Transactions = () => {
   const [pages, setPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  console.log("Transactions page loaded");
+
   const fetchTransactions = async () => {
     try {
       setLoading(true);

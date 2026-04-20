@@ -17,31 +17,45 @@ const Login = () => {
     }, [navigate]);
 
     const handleLogin = async (e) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        if (!email || !password) {
-            alert("Please enter email and password");
-            return;
-        }
+    if (!email || !password) {
+        alert("Please enter email and password");
+        return;
+    }
 
-        try {
-            setLoading(true);
+    try {
+        setLoading(true);
 
-            const res = await API.post("/auth/login", {
-                email,
-                password,
-            });
+        const res = await API.post("/auth/login", {
+            email,
+            password,
+        });
 
-            localStorage.setItem("token", res.data.token);
+        console.log("Login response:", res.data);
 
-            navigate("/transactions");
-        } catch (err) {
-            console.error(err.response?.data || err.message);
-            alert(err.response?.data?.error || "Login failed");
-        } finally {
-            setLoading(false);
-        }
-    };
+        // Store token
+        localStorage.setItem("token", res.data.token);
+
+        // Store user (FIX)
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        // Debug check
+        console.log(
+          "Saved user:",
+          JSON.parse(localStorage.getItem("user"))
+        );
+
+        // Force reload (ensures Layout runs with data)
+        window.location.href = "/transactions";
+
+    } catch (err) {
+        console.error(err.response?.data || err.message);
+        alert(err.response?.data?.error || "Login failed");
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="container">

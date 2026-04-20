@@ -4,6 +4,7 @@ import SummaryCards from "../components/SummaryCards";
 import PredictionCard from "../components/PredictionCard";
 import CategoryChart from "../components/CategoryChart";
 import TrendChart from "../components/TrendChart";
+import HealthScoreCard from "../components/HealthScoreCard";
 
 
 const Dashboard = () => {
@@ -28,8 +29,16 @@ const Dashboard = () => {
     <div className="dashboard">
       <h1>📊 FinSight Dashboard</h1>
 
+      {/* Financial Health Score */}
+      <div style={{ marginTop: "20px" }}>
+        <HealthScoreCard
+          score={data.healthScore}
+          insights={data.healthInsights}
+        />
+      </div>
+
       {/* Summary Cards */}
-      <div className="grid grid-3">
+      <div className="grid grid-3" style={{ marginTop: "20px" }}>
         <SummaryCards summary={data.summary} />
       </div>
 
