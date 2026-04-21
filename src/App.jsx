@@ -8,6 +8,7 @@ import Layout from "./components/Layout";
 import Profile from "./pages/Profile";
 import Reports from "./pages/Reports";
 import Alerts from "./pages/Alerts";
+import Landing from "./pages/Landing";
 import "./App.css";
 
 function App() {
@@ -16,7 +17,8 @@ function App() {
       <Routes>
 
         {/* Public Routes */}
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* Protected Routes */}
