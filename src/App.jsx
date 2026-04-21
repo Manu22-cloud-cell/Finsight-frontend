@@ -9,7 +9,11 @@ import Profile from "./pages/Profile";
 import Reports from "./pages/Reports";
 import Alerts from "./pages/Alerts";
 import Landing from "./pages/Landing";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 import "./App.css";
+
+
 
 function App() {
   return (
@@ -20,6 +24,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected Routes */}
         <Route

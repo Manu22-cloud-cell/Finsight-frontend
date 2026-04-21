@@ -84,6 +84,16 @@ const Login = () => {
                             Show Password
                         </label>
                     </div>
+                    <p style={styles.forgotWrapper}>
+                        <Link
+                            to="/forgot-password"
+                            style={styles.forgotLink}
+                            onMouseEnter={(e) => (e.target.style.color = "#2563eb")}
+                            onMouseLeave={(e) => (e.target.style.color = "#6b7280")}
+                        >
+                            Forgot Password?
+                        </Link>
+                    </p>
 
                     <button
                         style={{
@@ -106,6 +116,7 @@ const Login = () => {
                     Don't have an account? <Link to="/register">Register</Link>
                 </p>
             </div>
+
         </div>
     );
 };
@@ -189,6 +200,18 @@ const styles = {
         color: "#555",
         cursor: "pointer",
         lineHeight: "1",
+    },
+    forgotWrapper: {
+        textAlign: "right",
+        marginTop: "-5px",
+    },
+
+    forgotLink: {
+        fontSize: "13px",
+        color: "#6b7280", // subtle gray
+        textDecoration: "none",
+        transition: "color 0.2s ease",
+        cursor: "pointer",
     },
 };
 
