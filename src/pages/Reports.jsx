@@ -4,281 +4,149 @@ import TrendChart from "../components/TrendChart";
 import API from "../services/api";
 
 const Reports = () => {
-    const [type, setType] = useState("daily");
-    const [data, setData] = useState([]);
-    const [history, setHistory] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [date, setDate] = useState("");
-    const [month, setMonth] = useState("");
-    const [year, setYear] = useState(new Date().getFullYear());
-    const [totals, setTotals] = useState({});
-    const [categoryData, setCategoryData] = useState({});
+  const [user, setUser] = useState(null);
 
-    const monthNames = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
+  const [type, setType] = useState("daily");
+  const [data, setData] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [date, setDate] = useState("");
+  const [month, setMonth] = useState("");
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [totals, setTotals] = useState({});
+  const [categoryData, setCategoryData] = useState({});
 
-    const formatCurrency = (value) =>
-        `₹${(value || 0).toLocaleString("en-IN")}`;
+  const monthNames = [
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec"
+  ];
 
-    const fetchReports = async () => {
-        try {
-            setLoading(true);
+  const formatCurrency = (v) =>
+    `₹${(v || 0).toLocaleString("en-IN")}`;
 
-            let query = `/reports?type=${type}`;
+  useEffect(() => {
+    const u = JSON.parse(localStorage.getItem("user"));
+    setUser(u);
+  }, []);
 
-            if (type === "daily" && date) {
-                query += `&date=${date}`;
-            }
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
 
-            if (type === "monthly") {
-                query += `&month=${month}&year=${year}`;
-            }
+      let query = `/reports?type=${type}`;
+      if (type === "daily" && date) query += `&date=${date}`;
+      if (type === "monthly") query += `&month=${month}&year=${year}`;
+      if (type === "yearly") query += `&year=${year}`;
 
-            if (type === "yearly") {
-                query += `&year=${year}`;
-            }
+      const res = await API.get(query);
 
-            const res = await API.get(query);
+      setData(res.data.data.transactions || res.data.data.data);
+      setTotals(res.data.data.totals || {});
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            setData(res.data.data.transactions || res.data.data.data);
-            setTotals(res.data.data.totals || {});
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchCategoryData = async () => {
+    let query = `/analytics/category-filter?type=${type}`;
+    if (type === "daily") query += `&date=${date}`;
+    if (type === "monthly") query += `&month=${month}&year=${year}`;
+    if (type === "yearly") query += `&year=${year}`;
 
-    const downloadReport = async () => {
-        try {
-            const res = await API.get(`/reports/download?type=${type}`);
-            window.open(res.data.fileUrl, "_blank");
-            fetchHistory();
-        } catch (err) {
-            console.error(err);
-            alert("Download failed");
-        }
-    };
+    const res = await API.get(query);
+    setCategoryData(res.data.data);
+  };
 
-    const fetchHistory = async () => {
-        const res = await API.get("/reports/history");
-        setHistory(res.data.data);
-    };
+  const fetchHistory = async () => {
+    const res = await API.get("/reports/history");
+    setHistory(res.data.data);
+  };
 
-    const fetchCategoryData = async () => {
-        let query = `/analytics/category-filter?type=${type}`;
+  const downloadReport = async () => {
+    try {
+      const res = await API.get(`/reports/download?type=${type}`);
+      window.open(res.data.fileUrl, "_blank");
+      fetchHistory();
+    } catch {
+      alert("Download failed");
+    }
+  };
 
-        if (type === "daily") query += `&date=${date}`;
-        if (type === "monthly") query += `&month=${month}&year=${year}`;
-        if (type === "yearly") query += `&year=${year}`;
+  useEffect(() => {
+    if (user?.isPremium) {
+      fetchReports();
+      fetchCategoryData();
+    }
+  }, [type, date, month, year, user]);
 
-        const res = await API.get(query);
-        setCategoryData(res.data.data);
-    };
+  useEffect(() => {
+    if (user?.isPremium) fetchHistory();
+  }, [user]);
 
-    useEffect(() => {
-        fetchReports();
-        fetchCategoryData();
-    }, [type, date, month, year]);
-
-    useEffect(() => {
-        fetchHistory();
-    }, []);
-
+  // ✅ SAFE RETURN AFTER HOOKS
+  if (!user?.isPremium) {
     return (
-        <div className="dashboard">
-            <h2>📊 Reports</h2>
-
-            {/* Filters */}
-            <div className="card">
-                <h3>Generate Report</h3>
-
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-
-                    <select value={type} onChange={(e) => setType(e.target.value)}>
-                        <option value="daily">Daily</option>
-                        <option value="monthly">Monthly</option>
-                        <option value="yearly">Yearly</option>
-                    </select>
-
-                    {type === "daily" && (
-                        <input
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                        />
-                    )}
-
-                    {type === "monthly" && (
-                        <>
-                            <select value={month} onChange={(e) => setMonth(e.target.value)}>
-                                <option value="">Select Month</option>
-                                {monthNames.map((m, i) => (
-                                    <option key={i} value={i + 1}>{m}</option>
-                                ))}
-                            </select>
-
-                            <input
-                                type="number"
-                                value={year}
-                                onChange={(e) => setYear(e.target.value)}
-                            />
-                        </>
-                    )}
-
-                    {type === "yearly" && (
-                        <input
-                            type="number"
-                            value={year}
-                            onChange={(e) => setYear(e.target.value)}
-                        />
-                    )}
-
-                    <button onClick={fetchReports}>🔍 Fetch</button>
-                    <button onClick={downloadReport}>⬇️ Download CSV</button>
-                </div>
-            </div>
-
-            {/* Totals */}
-            <div className="grid grid-3" style={{ marginTop: "20px" }}>
-                <div className="card">
-                    <p style={{ fontSize: "12px", color: "#777" }}>💰 Total Income</p>
-                    <h2 style={{ color: "#2e7d32" }}>
-                        {formatCurrency(totals.totalIncome)}
-                    </h2>
-                </div>
-
-                <div className="card">
-                    <p style={{ fontSize: "12px", color: "#777" }}>💸 Total Expense</p>
-                    <h2 style={{ color: "#c62828" }}>
-                        {formatCurrency(totals.totalExpense)}
-                    </h2>
-                </div>
-
-                <div className="card">
-                    <p style={{ fontSize: "12px", color: "#777" }}>💳 Balance</p>
-                    <h2 style={{
-                        color: totals.balance < 0 ? "#c62828" : "#2e7d32"
-                    }}>
-                        {formatCurrency(totals.balance)}
-                    </h2>
-                </div>
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-2" style={{ marginTop: "20px" }}>
-                <CategoryChart data={categoryData} />
-
-                {type === "yearly" && (
-                    <TrendChart
-                        data={Object.fromEntries(
-                            data.map((item) => [
-                                monthNames[item.month - 1],
-                                { income: item.income, expense: item.expense },
-                            ])
-                        )}
-                    />
-                )}
-            </div>
-
-            {/* Table */}
-            <div className="card">
-                <h3>Report Data</h3>
-
-                {loading ? (
-                    <p style={{ textAlign: "center", padding: "20px" }}>
-                        ⏳ Fetching report...
-                    </p>
-                ) : data.length === 0 ? (
-                    <p style={{ textAlign: "center", padding: "20px", color: "#777" }}>
-                        📭 No data found for selected filters
-                    </p>
-                ) : type === "yearly" ? (
-                    <table className="report-table">
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th>Income</th>
-                                <th>Expense</th>
-                                <th>Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((item, index) => (
-                                <tr key={index}>
-                                    <td>{monthNames[item.month - 1]}</td>
-                                    <td style={{ color: "#2e7d32" }}>
-                                        {formatCurrency(item.income)}
-                                    </td>
-                                    <td style={{ color: "#c62828" }}>
-                                        {formatCurrency(item.expense)}
-                                    </td>
-                                    <td style={{ fontWeight: "500" }}>
-                                        {formatCurrency(item.income - item.expense)}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <table className="report-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Category</th>
-                                <th style={{ textAlign: "right" }}>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((item, index) => (
-                                <tr key={index}>
-                                    <td>{new Date(item.date).toLocaleDateString()}</td>
-                                    <td>
-                                        <span className={item.type === "income" ? "badge income" : "badge expense"}>
-                                            {item.type}
-                                        </span>
-                                    </td>
-                                    <td>{item.category}</td>
-                                    <td style={{
-                                        textAlign: "right",
-                                        color: item.type === "income" ? "#2e7d32" : "#c62828"
-                                    }}>
-                                        {formatCurrency(item.amount)}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-
-            {/* History */}
-            <div className="card">
-                <h3>Download History</h3>
-
-                {history.length === 0 ? (
-                    <p>No reports downloaded yet</p>
-                ) : (
-                    <div className="history-list">
-                        {history.map((h, index) => (
-                            <div key={index} className="history-item">
-                                <span>
-                                    {new Date(h.downloadedAt).toLocaleString()}
-                                </span>
-
-                                <a href={h.fileUrl} target="_blank" rel="noreferrer">
-                                    Download
-                                </a>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
+      <div className="card">
+        <h2>🔒 Premium Feature</h2>
+        <p>Upgrade to view reports</p>
+      </div>
     );
+  }
+
+  return (
+    <div className="dashboard">
+      <h2>📊 Reports</h2>
+
+      <div className="card">
+        <h3>Generate Report</h3>
+
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+          <select value={type} onChange={(e) => setType(e.target.value)}>
+            <option value="daily">Daily</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+
+          <button onClick={fetchReports}>🔍 Fetch</button>
+          <button onClick={downloadReport}>⬇️ Download CSV</button>
+        </div>
+      </div>
+
+      <div className="grid grid-3" style={{ marginTop: "20px" }}>
+        <div className="card">
+          <h2>{formatCurrency(totals.totalIncome)}</h2>
+          <p>Income</p>
+        </div>
+
+        <div className="card">
+          <h2>{formatCurrency(totals.totalExpense)}</h2>
+          <p>Expense</p>
+        </div>
+
+        <div className="card">
+          <h2>{formatCurrency(totals.balance)}</h2>
+          <p>Balance</p>
+        </div>
+      </div>
+
+      <div className="grid grid-2" style={{ marginTop: "20px" }}>
+        <CategoryChart data={categoryData} />
+
+        {type === "yearly" && (
+          <TrendChart
+            data={Object.fromEntries(
+              data.map((item) => [
+                monthNames[item.month - 1],
+                { income: item.income, expense: item.expense },
+              ])
+            )}
+          />
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Reports;

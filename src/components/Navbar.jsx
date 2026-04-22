@@ -6,10 +6,12 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
+  const [loadingPayment, setLoadingPayment] = useState(false);
   const dropdownRef = useRef();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/");
   };
 
@@ -22,11 +24,55 @@ const Navbar = () => {
     }
   };
 
+  const handleBuyPremium = async () => {
+    try {
+      setLoadingPayment(true);
+
+      if (!window.Razorpay) {
+        alert("Razorpay SDK not loaded");
+        return;
+      }
+
+      const { data } = await API.post("/payments/create-order");
+
+      const rzp = new window.Razorpay({
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency,
+        name: "FinSight Premium",
+        description: "Unlock analytics & reports",
+        order_id: data.orderId,
+
+        handler: async (response) => {
+          await API.post("/payments/verify", response);
+          alert("🎉 Premium activated");
+
+          const updatedUser = await API.get("/user/profile");
+          localStorage.setItem("user", JSON.stringify(updatedUser.data));
+          setUser(updatedUser.data);
+        },
+
+        prefill: {
+          name: user?.name || "",
+          email: user?.email || "",
+        },
+
+        theme: { color: "#2563eb" },
+      });
+
+      rzp.open();
+    } catch (err) {
+      console.error(err);
+      alert("Payment failed");
+    } finally {
+      setLoadingPayment(false);
+    }
+  };
+
   useEffect(() => {
     fetchUser();
   }, []);
 
-  // Close dropdown
   useEffect(() => {
     const handler = (e) => {
       if (!dropdownRef.current?.contains(e.target)) {
@@ -39,42 +85,29 @@ const Navbar = () => {
 
   return (
     <div style={styles.nav}>
-      {/* LOGO */}
       <h2 style={styles.logo} onClick={() => navigate("/dashboard")}>
         FinSight
       </h2>
 
-      {/* NAV LINKS */}
       <div style={styles.links}>
-        <NavLink to="/transactions" style={navLinkStyle}>
-          Transactions
-        </NavLink>
-
-        <NavLink to="/dashboard" style={navLinkStyle}>
-          Dashboard
-        </NavLink>
-
-        <NavLink to="/reports" style={navLinkStyle}>
-          Reports
-        </NavLink>
+        <NavLink to="/transactions" style={navLinkStyle}>Transactions</NavLink>
+        <NavLink to="/dashboard" style={navLinkStyle}>Dashboard</NavLink>
+        <NavLink to="/reports" style={navLinkStyle}>Reports</NavLink>
       </div>
 
-      {/* USER */}
       <div style={styles.userSection} ref={dropdownRef}>
-        <div
-          style={styles.userInfo}
-          onClick={() => setOpen((prev) => !prev)}
-        >
+        <div style={styles.userInfo} onClick={() => setOpen(!open)}>
           <img
             src={
               user?.profilePic ||
-              "https://ui-avatars.com/api/?name=" + user?.name
+              `https://ui-avatars.com/api/?name=${user?.name || "User"}`
             }
             alt="avatar"
             style={styles.avatar}
           />
           <span style={styles.userName}>
             {user?.name || "User"}
+            {user?.isPremium && <span style={styles.premiumBadge}>PRO</span>}
           </span>
         </div>
 
@@ -82,25 +115,59 @@ const Navbar = () => {
           <div style={styles.dropdown}>
             {/* HEADER */}
             <div style={styles.dropdownHeader}>
-              <p style={styles.dropdownName}>{user?.name}</p>
-              <p style={styles.dropdownEmail}>{user?.email}</p>
+              <img
+                src={
+                  user?.profilePic ||
+                  `https://ui-avatars.com/api/?name=${user?.name || "User"}`
+                }
+                alt="avatar"
+                style={styles.avatarLarge}
+              />
+              <div>
+                <p style={styles.dropdownName}>{user?.name || "User"}</p>
+                <p style={styles.dropdownEmail}>{user?.email}</p>
+              </div>
             </div>
 
-            {/* ITEMS */}
+            <div style={styles.divider} />
+
+            {/* PROFILE */}
             <div
               style={styles.dropdownItem}
-              onClick={() => navigate("/profile")}
-              onMouseEnter={(e) => (e.target.style.background = "#f3f4f6")}
-              onMouseLeave={(e) => (e.target.style.background = "transparent")}
+              onClick={() => {
+                navigate("/profile");
+                setOpen(false); // optional: close dropdown after click
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               👤 Profile
             </div>
 
+            {/* PREMIUM CTA */}
+            {!user?.isPremium && (
+              <div style={styles.premiumBox}>
+                <p style={styles.premiumText}>
+                  Unlock insights & reports
+                </p>
+                <button
+                  style={styles.premiumBtn}
+                  disabled={loadingPayment}
+                  onClick={handleBuyPremium}
+                >
+                  {loadingPayment ? "Processing..." : "Upgrade"}
+                </button>
+              </div>
+            )}
+
+            <div style={styles.divider} />
+
+            {/* LOGOUT */}
             <div
               style={{ ...styles.dropdownItem, color: "#dc2626" }}
-              onClick={handleLogout}
               onMouseEnter={(e) => (e.target.style.background = "#f3f4f6")}
               onMouseLeave={(e) => (e.target.style.background = "transparent")}
+              onClick={handleLogout}
             >
               🚪 Logout
             </div>
@@ -111,18 +178,14 @@ const Navbar = () => {
   );
 };
 
-// NavLink styling
 const navLinkStyle = ({ isActive }) => ({
   color: isActive ? "#4ade80" : "#e5e7eb",
   textDecoration: "none",
   fontWeight: 500,
-  position: "relative",
   paddingBottom: "4px",
   borderBottom: isActive ? "2px solid #4ade80" : "2px solid transparent",
-  transition: "all 0.2s ease",
 });
 
-// Styles
 const styles = {
   nav: {
     display: "flex",
@@ -133,21 +196,11 @@ const styles = {
     color: "#fff",
   },
 
-  logo: {
-    margin: 0,
-    cursor: "pointer",
-    fontWeight: "bold",
-  },
+  logo: { cursor: "pointer" },
 
-  links: {
-    display: "flex",
-    gap: "25px",
-    alignItems: "center",
-  },
+  links: { display: "flex", gap: "25px" },
 
-  userSection: {
-    position: "relative",
-  },
+  userSection: { position: "relative" },
 
   userInfo: {
     display: "flex",
@@ -159,51 +212,103 @@ const styles = {
     transition: "background 0.2s",
   },
 
-  userName: {
-    fontSize: "14px",
-    fontWeight: 500,
-  },
+  userName: { fontSize: "14px", fontWeight: 500 },
 
   avatar: {
     width: "34px",
     height: "34px",
     borderRadius: "50%",
-    objectFit: "cover",
+  },
+
+  avatarLarge: {
+    width: "42px",
+    height: "42px",
+    borderRadius: "50%",
   },
 
   dropdown: {
     position: "absolute",
-    top: "45px",
+    top: "48px",
     right: 0,
+    width: "220px",
     background: "#fff",
-    color: "#000",
-    borderRadius: "10px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
-    minWidth: "180px",
+    borderRadius: "12px",
+    boxShadow: "0 15px 30px rgba(0,0,0,0.15)",
     overflow: "hidden",
+    color: "#111827",
+    border: "1px solid #e5e7eb",
   },
 
   dropdownHeader: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "center",
     padding: "12px",
-    borderBottom: "1px solid #eee",
   },
 
   dropdownName: {
     margin: 0,
     fontWeight: "600",
+    fontSize: "14px",
+    color: "#111827",
   },
 
   dropdownEmail: {
     margin: 0,
     fontSize: "12px",
-    color: "#777",
+    color: "#6b7280",
   },
 
   dropdownItem: {
-    padding: "10px 12px",
+    padding: "10px 14px",
     cursor: "pointer",
     fontSize: "14px",
+    color: "#111827",
     transition: "background 0.2s",
+  },
+
+  dropdownItemHover: {
+    background: "#f3f4f6",
+  },
+
+  divider: {
+    height: "1px",
+    background: "#eee",
+    margin: "4px 0",
+  },
+
+  premiumBox: {
+    padding: "12px",
+    background: "#f9fafb",
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+  },
+
+  premiumText: {
+    fontSize: "12px",
+    margin: 0,
+    color: "#555",
+  },
+
+  premiumBtn: {
+    padding: "6px",
+    borderRadius: "6px",
+    border: "none",
+    background: "#2563eb",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: "13px",
+  },
+
+  premiumBadge: {
+    marginLeft: "6px",
+    fontSize: "10px",
+    background: "#facc15",
+    color: "#000",
+    padding: "2px 6px",
+    borderRadius: "6px",
+    fontWeight: "bold",
   },
 };
 
