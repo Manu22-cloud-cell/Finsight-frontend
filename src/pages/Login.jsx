@@ -2,12 +2,18 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
 
+// Import utility
+import {
+    toastSuccess,
+    toastWarning,
+    toastApiError,
+} from "../utils/toast";
+
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
     const [hover, setHover] = useState(false);
 
     const navigate = useNavigate();
@@ -19,10 +25,10 @@ const Login = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setError("");
 
+        // Validation
         if (!email || !password) {
-            return setError("Please fill all fields");
+            return toastWarning("Please fill all fields");
         }
 
         try {
@@ -33,9 +39,14 @@ const Login = () => {
             localStorage.setItem("token", res.data.token);
             localStorage.setItem("user", JSON.stringify(res.data.user));
 
-            window.location.href = "/transactions";
+            // Success toast
+            toastSuccess("Welcome back! 🚀");
+
+            // Better navigation (no full reload)
+            navigate("/transactions");
+
         } catch (err) {
-            setError(err.response?.data?.error || "Login failed");
+            toastApiError(err); // clean & reusable
         } finally {
             setLoading(false);
         }
@@ -46,10 +57,7 @@ const Login = () => {
             <div style={styles.card}>
                 <h2 style={styles.title}>Welcome Back 👋</h2>
 
-                {error && <p style={styles.error}>{error}</p>}
-
                 <form onSubmit={handleLogin} style={styles.form}>
-
                     <div style={styles.field}>
                         <label>Email</label>
                         <input
@@ -84,12 +92,17 @@ const Login = () => {
                             Show Password
                         </label>
                     </div>
+
                     <p style={styles.forgotWrapper}>
                         <Link
                             to="/forgot-password"
                             style={styles.forgotLink}
-                            onMouseEnter={(e) => (e.target.style.color = "#2563eb")}
-                            onMouseLeave={(e) => (e.target.style.color = "#6b7280")}
+                            onMouseEnter={(e) =>
+                                (e.currentTarget.style.color = "#2563eb")
+                            }
+                            onMouseLeave={(e) =>
+                                (e.currentTarget.style.color = "#6b7280")
+                            }
                         >
                             Forgot Password?
                         </Link>
@@ -108,7 +121,7 @@ const Login = () => {
                         onMouseLeave={() => setHover(false)}
                         disabled={loading}
                     >
-                        {loading ? "Loading..." : "Login"}
+                        {loading ? "Logging in..." : "Login"}
                     </button>
                 </form>
 
@@ -116,7 +129,6 @@ const Login = () => {
                     Don't have an account? <Link to="/register">Register</Link>
                 </p>
             </div>
-
         </div>
     );
 };

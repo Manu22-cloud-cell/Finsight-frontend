@@ -1,9 +1,17 @@
 import { useState } from "react";
 import API from "../../services/api";
-import { expenseCategories, incomeCategories } from "../../constants/categories";
+import {
+  toastSuccess,
+  toastApiError,
+  toastWarning,
+} from "../../utils/toast";
+
+import {
+  expenseCategories,
+  incomeCategories,
+} from "../../constants/categories";
 
 const TransactionForm = ({ onSuccess }) => {
-
   const getToday = () => new Date().toISOString().split("T")[0];
 
   const [form, setForm] = useState({
@@ -13,6 +21,8 @@ const TransactionForm = ({ onSuccess }) => {
     note: "",
     date: getToday(),
   });
+
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,10 +37,28 @@ const TransactionForm = ({ onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    try {
-      await API.post("/transactions", form);
-      onSuccess();
+    // Prevent multiple clicks
+    if (loading) return;
 
+    // Validation
+    if (!form.amount || !form.category) {
+      return toastWarning("Please fill all required fields");
+    }
+
+    if (Number(form.amount) <= 0) {
+      return toastWarning("Enter a valid amount");
+    }
+
+    try {
+      setLoading(true);
+
+      await API.post("/transactions", form);
+
+      toastSuccess("Transaction added 💸", {
+        autoClose: 1500,
+      });
+
+      // Reset form
       setForm({
         type: "expense",
         amount: "",
@@ -38,8 +66,13 @@ const TransactionForm = ({ onSuccess }) => {
         note: "",
         date: getToday(),
       });
+
+      onSuccess(); // refresh list
+
     } catch (err) {
-      console.error(err);
+      toastApiError(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,7 +95,6 @@ const TransactionForm = ({ onSuccess }) => {
         placeholder="Enter amount (₹)"
         value={form.amount}
         onChange={handleChange}
-        required
         style={styles.input}
       />
 
@@ -70,16 +102,18 @@ const TransactionForm = ({ onSuccess }) => {
         name="category"
         value={form.category}
         onChange={handleChange}
-        required
         style={styles.input}
       >
         <option value="">
           {form.type === "income"
-            ? "Select income source (e.g. Salary)"
-            : "Select expense category (e.g. Food, Rent)"}
+            ? "Select income source"
+            : "Select expense category"}
         </option>
 
-        {(form.type === "income" ? incomeCategories : expenseCategories).map((cat) => (
+        {(form.type === "income"
+          ? incomeCategories
+          : expenseCategories
+        ).map((cat) => (
           <option key={cat} value={cat}>
             {cat}
           </option>
@@ -91,8 +125,8 @@ const TransactionForm = ({ onSuccess }) => {
         name="note"
         placeholder={
           form.type === "income"
-            ? "Add note (e.g. Freelance project)"
-            : "Add note (e.g. Dinner with friends)"
+            ? "Add note (e.g. Freelance)"
+            : "Add note (e.g. Dinner)"
         }
         value={form.note}
         onChange={handleChange}
@@ -109,11 +143,16 @@ const TransactionForm = ({ onSuccess }) => {
 
       <button
         type="submit"
-        style={styles.button}
+        disabled={loading}
         onMouseOver={(e) => (e.target.style.background = "#45a049")}
         onMouseOut={(e) => (e.target.style.background = "#4CAF50")}
+        style={{
+          ...styles.button,
+          opacity: loading ? 0.7 : 1,
+          cursor: loading ? "not-allowed" : "pointer",
+        }}
       >
-        ➕ Add Transaction
+        {loading ? "Adding..." : "➕ Add Transaction"}
       </button>
 
     </form>

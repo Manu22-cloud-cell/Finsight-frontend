@@ -1,20 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import API from "../services/api";
+import {
+    toastSuccess,
+    toastWarning,
+    toastApiError,
+} from "../utils/toast";
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
     const [hover, setHover] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
 
         if (!email) {
-            return setError("Please enter your email");
+            return toastWarning("Please enter your email");
         }
 
         try {
@@ -22,11 +25,12 @@ const ForgotPassword = () => {
 
             await API.post("/auth/forgot-password", { email });
 
-            // Always show success (no email enumeration)
+            // UX: success state + toast
             setSuccess(true);
+            toastSuccess("Reset link sent (if account exists)");
 
         } catch (err) {
-            setError(err.response?.data?.error || "Something went wrong");
+            toastApiError(err);
         } finally {
             setLoading(false);
         }
@@ -37,8 +41,6 @@ const ForgotPassword = () => {
             <div style={styles.card}>
 
                 <h2 style={styles.title}>Forgot Password 🔑</h2>
-
-                {error && <p style={styles.error}>{error}</p>}
 
                 {success ? (
                     <div style={{ textAlign: "center" }}>
@@ -60,6 +62,7 @@ const ForgotPassword = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 style={styles.input}
+                                disabled={success}
                             />
                         </div>
 
@@ -76,7 +79,7 @@ const ForgotPassword = () => {
                             onMouseLeave={() => setHover(false)}
                             disabled={loading}
                         >
-                            {loading ? "Sending..." : "Send Reset Link"}
+                            {success ? "Email Sent ✅" : loading ? "Sending..." : "Send Reset Link"}
                         </button>
                     </form>
                 )}

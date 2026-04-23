@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import API from "../services/api";
+import {
+    toastSuccess,
+    toastWarning,
+    toastApiError,
+} from "../utils/toast";
+
 
 const Register = () => {
     const [form, setForm] = useState({
@@ -13,13 +19,24 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [hover, setHover] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        setError("");
+
+        // Validation
+        if (!form.name || !form.email || !form.password || !form.monthlyBudget) {
+            return toastWarning("Please fill all fields");
+        }
+
+        if (form.password.length < 6) {
+            return toastWarning("Password must be at least 6 characters");
+        }
+
+        if (Number(form.monthlyBudget) <= 0) {
+            return toastWarning("Enter a valid budget");
+        }
 
         try {
             setLoading(true);
@@ -29,9 +46,14 @@ const Register = () => {
                 monthlyBudget: Number(form.monthlyBudget),
             });
 
-            navigate("/");
+            toastSuccess("Registration successful 🎉");
+
+            setTimeout(() => {
+                navigate("/login");
+            }, 1000);
+
         } catch (err) {
-            setError(err.response?.data?.error || "Registration failed");
+            toastApiError(err);
         } finally {
             setLoading(false);
         }
@@ -41,8 +63,6 @@ const Register = () => {
         <div style={styles.wrapper}>
             <div style={styles.card}>
                 <h2 style={styles.title}>Create Account 🚀</h2>
-
-                {error && <p style={styles.error}>{error}</p>}
 
                 <form onSubmit={handleRegister} style={styles.form}>
 
@@ -99,7 +119,7 @@ const Register = () => {
                         <label>Monthly Budget</label>
                         <input
                             type="number"
-                            placeholder="e.g. 50,000"
+                            placeholder="e.g. 50000"
                             onChange={(e) =>
                                 setForm({
                                     ...form,
@@ -130,7 +150,7 @@ const Register = () => {
                 </form>
 
                 <p style={styles.footer}>
-                    Already have an account? <Link to="/">Login</Link>
+                    Already have an account? <Link to="/login">Login</Link>
                 </p>
             </div>
         </div>

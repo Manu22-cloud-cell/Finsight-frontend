@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
+import {
+  toastSuccess,
+  toastWarning,
+  toastApiError,
+} from "../utils/toast";
 
 const Profile = () => {
   const [form, setForm] = useState({
@@ -18,7 +23,6 @@ const Profile = () => {
   const [preview, setPreview] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
 
   const formatCurrency = (value) =>
     `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -35,10 +39,10 @@ const Profile = () => {
 
       setPreview(
         res.data.profilePic ||
-        `https://ui-avatars.com/api/?name=${res.data.name}`
+          `https://ui-avatars.com/api/?name=${res.data.name}`
       );
     } catch (err) {
-      console.error(err);
+      toastApiError(err);
     }
   };
 
@@ -62,12 +66,21 @@ const Profile = () => {
     setPreview(URL.createObjectURL(file));
   };
 
+  // UPDATE PROFILE
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
+
+    if (!form.name || !form.monthlyBudget) {
+      return toastWarning("Please fill all required fields");
+    }
+
+    if (Number(form.monthlyBudget) <= 0) {
+      return toastWarning("Enter a valid budget");
+    }
 
     try {
+      setLoading(true);
+
       const formData = new FormData();
       formData.append("name", form.name);
       formData.append("monthlyBudget", form.monthlyBudget);
@@ -78,26 +91,38 @@ const Profile = () => {
 
       await API.put("/user/profile", formData);
 
-      setMessage("✅ Profile updated successfully");
+      toastSuccess("Profile updated successfully");
+
       fetchUser();
     } catch (err) {
-      setMessage("❌ Update failed");
+      toastApiError(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangePassword = async (e) => {
+  // CHANGE PASSWORD
+  const handleChangePasswordSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMessage("");
+
+    if (!passwords.oldPassword || !passwords.newPassword) {
+      return toastWarning("Please fill all password fields");
+    }
+
+    if (passwords.newPassword.length < 6) {
+      return toastWarning("New password must be at least 6 characters");
+    }
 
     try {
+      setLoading(true);
+
       await API.put("/user/password", passwords);
-      setMessage("✅ Password updated");
+
+      toastSuccess("Password updated successfully");
+
       setPasswords({ oldPassword: "", newPassword: "" });
     } catch (err) {
-      setMessage(err.response?.data?.error || "❌ Failed");
+      toastApiError(err);
     } finally {
       setLoading(false);
     }
@@ -108,7 +133,6 @@ const Profile = () => {
       <h2>👤 Profile Settings</h2>
 
       <div className="grid grid-2" style={{ marginTop: "20px" }}>
-
         {/* PROFILE CARD */}
         <div className="card" style={{ textAlign: "center" }}>
           <div style={{ position: "relative", display: "inline-block" }}>
@@ -125,7 +149,6 @@ const Profile = () => {
           </div>
 
           <form onSubmit={handleUpdateProfile} style={styles.form}>
-
             <div style={styles.field}>
               <label style={styles.label}>Name</label>
               <input
@@ -165,8 +188,7 @@ const Profile = () => {
         <div className="card">
           <h3>🔐 Change Password</h3>
 
-          <form onSubmit={handleChangePassword} style={styles.form}>
-
+          <form onSubmit={handleChangePasswordSubmit} style={styles.form}>
             <div style={styles.field}>
               <label style={styles.label}>Old Password</label>
               <input
@@ -189,7 +211,6 @@ const Profile = () => {
               />
             </div>
 
-            {/* Checkbox aligned */}
             <div style={styles.checkboxWrapper}>
               <input
                 type="checkbox"
@@ -209,12 +230,6 @@ const Profile = () => {
           </form>
         </div>
       </div>
-
-      {message && (
-        <p style={{ marginTop: "15px", textAlign: "center" }}>
-          {message}
-        </p>
-      )}
     </div>
   );
 };
@@ -226,7 +241,6 @@ const styles = {
     borderRadius: "50%",
     objectFit: "cover",
   },
-
   uploadBtn: {
     position: "absolute",
     bottom: "0",
@@ -238,7 +252,6 @@ const styles = {
     cursor: "pointer",
     fontSize: "12px",
   },
-
   form: {
     marginTop: "20px",
     display: "flex",
@@ -246,54 +259,46 @@ const styles = {
     gap: "18px",
     textAlign: "left",
   },
-
   field: {
     display: "flex",
     flexDirection: "column",
     gap: "6px",
-    paddingRight: "4px", 
+    paddingRight: "4px",
   },
-
   label: {
     fontSize: "13px",
     fontWeight: "500",
     color: "#555",
   },
-
   input: {
     width: "100%",
     padding: "10px 12px",
     borderRadius: "6px",
     border: "1px solid #ddd",
-    boxSizing: "border-box", 
+    boxSizing: "border-box",
   },
-
   helper: {
     fontSize: "12px",
     color: "#777",
   },
-
   checkboxWrapper: {
     display: "flex",
     alignItems: "center",
     gap: "6px",
     marginTop: "4px",
   },
-
   checkbox: {
     margin: 0,
     width: "14px",
     height: "14px",
     cursor: "pointer",
   },
-
   checkboxLabel: {
     fontSize: "13px",
     color: "#555",
     cursor: "pointer",
     lineHeight: "1",
   },
-
   button: {
     padding: "10px",
     border: "none",

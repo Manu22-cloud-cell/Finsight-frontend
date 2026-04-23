@@ -1,17 +1,36 @@
 import { useState } from "react";
 import API from "../../services/api";
 import EditTransactionModal from "./EditTransactionModal";
+import DeleteConfirmModal from "../common/DeleteConfirmModal";
+import {
+  toastSuccess,
+  toastApiError,
+  toastWarning,
+} from "../../utils/toast";
 
 const TransactionItem = ({ txn, onRefresh }) => {
   const [showModal, setShowModal] = useState(false);
   const [hover, setHover] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const handleDelete = async () => {
+    if (deleting) return;
+
     try {
+      setDeleting(true);
+
       await API.delete(`/transactions/${txn._id}`);
+
+      toastSuccess("Transaction deleted 🗑️");
+
+      setShowDeleteModal(false);
       onRefresh();
+
     } catch (err) {
-      console.error(err);
+      toastApiError(err);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -64,7 +83,7 @@ const TransactionItem = ({ txn, onRefresh }) => {
 
           <button
             style={styles.deleteBtn}
-            onClick={handleDelete}
+            onClick={() => setShowDeleteModal(true)}
           >
             🗑️
           </button>
@@ -76,6 +95,13 @@ const TransactionItem = ({ txn, onRefresh }) => {
           txn={txn}
           onClose={() => setShowModal(false)}
           onSuccess={onRefresh}
+        />
+      )}
+      {showDeleteModal && (
+        <DeleteConfirmModal
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={handleDelete}
+          loading={deleting}
         />
       )}
     </>

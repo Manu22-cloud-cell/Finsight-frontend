@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import API from "../../services/api";
 import { expenseCategories, incomeCategories } from "../../constants/categories";
+import {
+  toastSuccess,
+  toastApiError,
+  toastWarning,
+} from "../../utils/toast";
 
 const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
   const [form, setForm] = useState({
@@ -12,6 +17,7 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
   });
 
   const [cancelHover, setCancelHover] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Pre-fill data
   useEffect(() => {
@@ -27,18 +33,43 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
   }, [txn]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "type") {
+      setForm({ ...form, type: value, category: "" });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (loading) return;
+
+    // Validation
+    if (!form.amount || !form.category) {
+      return toastWarning("Please fill all required fields");
+    }
+
+    if (Number(form.amount) <= 0) {
+      return toastWarning("Enter a valid amount");
+    }
+
     try {
+      setLoading(true);
+
       await API.put(`/transactions/${txn._id}`, form);
+
+      toastSuccess("Transaction updated ✏️");
+
       onSuccess();   // refresh list
       onClose();     // close modal
+
     } catch (err) {
-      console.error(err);
+      toastApiError(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,11 +133,14 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
           <div style={styles.actions}>
             <button
               type="submit"
-              style={styles.updateBtn}
-              onMouseOver={(e) => (e.target.style.background = "#45a049")}
-              onMouseOut={(e) => (e.target.style.background = "#4CAF50")}
+              disabled={loading}
+              style={{
+                ...styles.updateBtn,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
             >
-              ✅ Update
+              {loading ? "Updating..." : "✅ Update"}
             </button>
 
             <button
@@ -130,30 +164,32 @@ const EditTransactionModal = ({ txn, onClose, onSuccess }) => {
 
 const styles = {
   overlay: {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  width: "100%",
-  height: "100%",
-  background: "rgba(0,0,0,0.5)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  zIndex: 9999, 
-},
-
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999,
+    backdropFilter: "blur(2px)",
+  },
   modal: {
+    position: "relative",
+    zIndex: 10000,
     background: "#fff",
-    padding: "25px",             
+    padding: "25px",
     borderRadius: "12px",
-    width: "350px",              
+    width: "350px",
     boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
   },
 
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",                
+    gap: "12px",
     marginTop: "10px",
   },
 
@@ -163,7 +199,7 @@ const styles = {
     borderRadius: "6px",
     border: "1px solid #ccc",
     fontSize: "14px",
-    boxSizing: "border-box",     
+    boxSizing: "border-box",
   },
 
   actions: {
@@ -181,6 +217,7 @@ const styles = {
     color: "#fff",
     cursor: "pointer",
     fontWeight: "600",
+    transition: "all 0.2s ease",
   },
 
   cancelBtn: {

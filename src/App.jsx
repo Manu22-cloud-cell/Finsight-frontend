@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Login from "./pages/Login";
@@ -11,9 +12,8 @@ import Alerts from "./pages/Alerts";
 import Landing from "./pages/Landing";
 import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
+
 import "./App.css";
-
-
 
 function App() {
   return (
@@ -83,7 +83,7 @@ function App() {
           }
         />
 
-        {/* Default redirect after login */}
+        {/* Default redirect */}
         <Route path="*" element={<Navigate to="/transactions" />} />
 
       </Routes>
