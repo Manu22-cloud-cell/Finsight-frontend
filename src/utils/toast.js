@@ -25,8 +25,8 @@ export const toastWarning = (message) => {
 // API error handler
 export const toastApiError = (err) => {
   const msg =
-    err?.response?.data?.error ||
     err?.response?.data?.message ||
+    err?.response?.data?.error ||
     err?.message ||
     "Something went wrong";
 

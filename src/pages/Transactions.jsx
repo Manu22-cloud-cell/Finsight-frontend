@@ -60,7 +60,10 @@ const Transactions = () => {
       <div style={styles.grid}>
         <div style={styles.card}>
           <h3>Add Transaction</h3>
-          <TransactionForm onSuccess={fetchTransactions} />
+          <TransactionForm onSuccess={() => {
+            setPage(1);
+            fetchTransactions();
+          }} />
         </div>
 
         <div style={styles.card}>
