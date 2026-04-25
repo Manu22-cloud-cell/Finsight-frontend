@@ -1,12 +1,18 @@
 import { useNavigate, NavLink } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import API from "../services/api";
+import {
+  toastSuccess,
+  toastApiError,
+  toastError,
+} from "../utils/toast";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef();
 
   const handleLogout = () => {
@@ -27,9 +33,10 @@ const Navbar = () => {
   const handleBuyPremium = async () => {
     try {
       setLoadingPayment(true);
+      setOpen(false);
 
       if (!window.Razorpay) {
-        alert("Razorpay SDK not loaded");
+        toastError("Payment service not loaded. Please try again.");
         return;
       }
 
@@ -44,12 +51,21 @@ const Navbar = () => {
         order_id: data.orderId,
 
         handler: async (response) => {
-          await API.post("/payments/verify", response);
-          alert("🎉 Premium activated");
+          try {
+            await API.post("/payments/verify", response);
 
-          const updatedUser = await API.get("/user/profile");
-          localStorage.setItem("user", JSON.stringify(updatedUser.data));
-          setUser(updatedUser.data);
+            toastSuccess("🎉 Premium activated!");
+
+            const updatedUser = await API.get("/user/profile");
+            localStorage.setItem("user", JSON.stringify(updatedUser.data));
+            setUser(updatedUser.data);
+
+            setTimeout(() => {
+              window.location.href = "/dashboard";
+            }, 800);
+          } catch (err) {
+            toastApiError(err);
+          }
         },
 
         prefill: {
@@ -62,8 +78,7 @@ const Navbar = () => {
 
       rzp.open();
     } catch (err) {
-      console.error(err);
-      alert("Payment failed");
+      toastApiError(err);
     } finally {
       setLoadingPayment(false);
     }
@@ -83,96 +98,144 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  return (
-    <div style={styles.nav}>
-      <h2 style={styles.logo} onClick={() => navigate("/dashboard")}>
-        FinSight
-      </h2>
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        const res = await API.get("/alerts");
+        setUnreadCount(
+          res.data.filter((a) => !a.isRead).length
+        );
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
-      <div style={styles.links}>
+    fetchAlerts();
+
+    // refetch every time page changes
+    const interval = setInterval(fetchAlerts, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+
+    <div style={styles.nav}>
+      {/* LEFT: LOGO */}
+      <div style={styles.left} >
+        <h2 style={styles.logo} onClick={() => navigate("/dashboard")}>
+          FinSight
+        </h2>
+      </div>
+
+
+      {/* CENTER: NAV LINKS */}
+      <div style={styles.center}>
         <NavLink to="/transactions" style={navLinkStyle}>Transactions</NavLink>
         <NavLink to="/dashboard" style={navLinkStyle}>Dashboard</NavLink>
         <NavLink to="/reports" style={navLinkStyle}>Reports</NavLink>
       </div>
 
-      <div style={styles.userSection} ref={dropdownRef}>
-        <div style={styles.userInfo} onClick={() => setOpen(!open)}>
-          <img
-            src={
-              user?.profilePic ||
-              `https://ui-avatars.com/api/?name=${user?.name || "User"}`
-            }
-            alt="avatar"
-            style={styles.avatar}
-          />
-          <span style={styles.userName}>
-            {user?.name || "User"}
-            {user?.isPremium && <span style={styles.premiumBadge}>PRO</span>}
-          </span>
+      {/* RIGHT: BELL + USER */}
+      <div style={styles.right}>
+        {/* BELL */}
+        <div style={styles.bell} onClick={() => navigate("/alerts")}>
+          🔔
+          {unreadCount > 0 && (
+            <span style={styles.badge}>{unreadCount}</span>
+          )}
         </div>
 
-        {open && (
-          <div style={styles.dropdown}>
-            {/* HEADER */}
-            <div style={styles.dropdownHeader}>
-              <img
-                src={
-                  user?.profilePic ||
-                  `https://ui-avatars.com/api/?name=${user?.name || "User"}`
-                }
-                alt="avatar"
-                style={styles.avatarLarge}
-              />
-              <div>
-                <p style={styles.dropdownName}>{user?.name || "User"}</p>
-                <p style={styles.dropdownEmail}>{user?.email}</p>
-              </div>
-            </div>
-
-            <div style={styles.divider} />
-
-            {/* PROFILE */}
-            <div
-              style={styles.dropdownItem}
-              onClick={() => {
-                navigate("/profile");
-                setOpen(false); // optional: close dropdown after click
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#f3f4f6")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-            >
-              👤 Profile
-            </div>
-
-            {/* PREMIUM CTA */}
-            {!user?.isPremium && (
-              <div style={styles.premiumBox}>
-                <p style={styles.premiumText}>
-                  Unlock insights & reports
-                </p>
-                <button
-                  style={styles.premiumBtn}
-                  disabled={loadingPayment}
-                  onClick={handleBuyPremium}
-                >
-                  {loadingPayment ? "Processing..." : "Upgrade"}
-                </button>
-              </div>
-            )}
-
-            <div style={styles.divider} />
-
-            {/* LOGOUT */}
-            <div
-              style={{ ...styles.dropdownItem, color: "#dc2626" }}
-              onMouseEnter={(e) => (e.target.style.background = "#f3f4f6")}
-              onMouseLeave={(e) => (e.target.style.background = "transparent")}
-              onClick={handleLogout}
-            >
-              🚪 Logout
-            </div>
+        {/* USER */}
+        <div style={styles.userSection} ref={dropdownRef}>
+          <div style={styles.userInfo} onClick={() => setOpen(!open)}>
+            <img
+              src={
+                user?.profilePic ||
+                `https://ui-avatars.com/api/?name=${user?.name || "User"}`
+              }
+              alt="avatar"
+              style={styles.avatar}
+            />
+            <span style={styles.userName}>
+              {user?.name || "User"}
+              {user?.isPremium && (
+                <span style={styles.premiumBadge}>PRO</span>
+              )}
+            </span>
           </div>
-        )}
+
+          {open && (
+            <div style={styles.dropdown}>
+              {/* HEADER */}
+              <div style={styles.dropdownHeader}>
+                <img
+                  src={
+                    user?.profilePic ||
+                    `https://ui-avatars.com/api/?name=${user?.name || "User"}`
+                  }
+                  alt="avatar"
+                  style={styles.avatarLarge}
+                />
+                <div>
+                  <p style={styles.dropdownName}>{user?.name || "User"}</p>
+                  <p style={styles.dropdownEmail}>{user?.email}</p>
+                </div>
+              </div>
+
+              <div style={styles.divider} />
+
+              {/* PROFILE */}
+              <div
+                style={styles.dropdownItem}
+                onClick={() => {
+                  navigate("/profile");
+                  setOpen(false);
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "#f3f4f6")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "transparent")
+                }
+              >
+                👤 Profile
+              </div>
+
+              {/* PREMIUM CTA */}
+              {!user?.isPremium && (
+                <div style={styles.premiumBox}>
+                  <p style={styles.premiumText}>
+                    Unlock insights & reports
+                  </p>
+                  <button
+                    style={styles.premiumBtn}
+                    disabled={loadingPayment}
+                    onClick={handleBuyPremium}
+                  >
+                    {loadingPayment ? "Processing..." : "Upgrade"}
+                  </button>
+                </div>
+              )}
+
+              <div style={styles.divider} />
+
+              {/* LOGOUT */}
+              <div
+                style={{ ...styles.dropdownItem, color: "#dc2626" }}
+                onMouseEnter={(e) =>
+                  (e.target.style.background = "#f3f4f6")
+                }
+                onMouseLeave={(e) =>
+                  (e.target.style.background = "transparent")
+                }
+                onClick={handleLogout}
+              >
+                🚪 Logout
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -183,22 +246,67 @@ const navLinkStyle = ({ isActive }) => ({
   textDecoration: "none",
   fontWeight: 500,
   paddingBottom: "4px",
-  borderBottom: isActive ? "2px solid #4ade80" : "2px solid transparent",
+  borderBottom: isActive
+    ? "2px solid #4ade80"
+    : "2px solid transparent",
 });
 
 const styles = {
   nav: {
     display: "flex",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
     padding: "12px 24px",
     background: "#1f2937",
     color: "#fff",
+    position: "relative", // important for centering trick
+  },
+
+
+  center: {
+    position: "absolute",
+    left: "50%",
+    transform: "translateX(-50%)",
+    display: "flex",
+    gap: "24px",
+  },
+
+  right: {
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+  },
+
+  bell: {
+    position: "relative",
+    cursor: "pointer",
+    fontSize: "20px",
   },
 
   logo: { cursor: "pointer" },
 
-  links: { display: "flex", gap: "25px" },
+  rightSection: {
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+  },
+
+  links: {
+    display: "flex",
+    gap: "18px",
+  },
+
+  badge: {
+    position: "absolute",
+    top: "-6px",
+    right: "-8px",
+    background: "red",
+    color: "#fff",
+    borderRadius: "50%",
+    padding: "2px 6px",
+    fontSize: "10px",
+    fontWeight: "bold",
+  },
 
   userSection: { position: "relative" },
 
@@ -209,7 +317,6 @@ const styles = {
     cursor: "pointer",
     padding: "6px 10px",
     borderRadius: "6px",
-    transition: "background 0.2s",
   },
 
   userName: { fontSize: "14px", fontWeight: 500 },
@@ -250,7 +357,6 @@ const styles = {
     margin: 0,
     fontWeight: "600",
     fontSize: "14px",
-    color: "#111827",
   },
 
   dropdownEmail: {
@@ -263,12 +369,6 @@ const styles = {
     padding: "10px 14px",
     cursor: "pointer",
     fontSize: "14px",
-    color: "#111827",
-    transition: "background 0.2s",
-  },
-
-  dropdownItemHover: {
-    background: "#f3f4f6",
   },
 
   divider: {
@@ -288,7 +388,6 @@ const styles = {
   premiumText: {
     fontSize: "12px",
     margin: 0,
-    color: "#555",
   },
 
   premiumBtn: {
