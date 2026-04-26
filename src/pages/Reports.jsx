@@ -3,7 +3,6 @@ import CategoryChart from "../components/CategoryChart";
 import TrendChart from "../components/TrendChart";
 import API from "../services/api";
 
-// Import toast utils
 import {
   toastApiError,
   toastError,
@@ -11,8 +10,9 @@ import {
   toastSuccess
 } from "../utils/toast";
 
-const Reports = () => {
-  const [user, setUser] = useState(null);
+import PremiumGuard from "../components/PremiumGuard";
+
+const ReportsContent = () => {
   const [type, setType] = useState("daily");
   const [data, setData] = useState([]);
   const [history, setHistory] = useState([]);
@@ -30,11 +30,6 @@ const Reports = () => {
 
   const formatCurrency = (v) =>
     `₹${(v || 0).toLocaleString("en-IN")}`;
-
-  useEffect(() => {
-    const u = JSON.parse(localStorage.getItem("user"));
-    setUser(u);
-  }, []);
 
   const fetchReports = async () => {
     try {
@@ -100,25 +95,13 @@ const Reports = () => {
   };
 
   useEffect(() => {
-    if (user?.isPremium) {
-      fetchReports();
-      fetchCategoryData();
-    }
-  }, [type, date, month, year, user]);
+    fetchReports();
+    fetchCategoryData();
+  }, [type, date, month, year]);
 
   useEffect(() => {
-    if (user?.isPremium) fetchHistory();
-  }, [user]);
-
-  // 🔒 Premium check
-  if (!user?.isPremium) {
-    return (
-      <div className="card">
-        <h2>🔒 Premium Feature</h2>
-        <p>Upgrade to view reports</p>
-      </div>
-    );
-  }
+    fetchHistory();
+  }, []);
 
   return (
     <div className="dashboard">
@@ -316,4 +299,12 @@ const Reports = () => {
   );
 };
 
-export default Reports; 
+const Reports = () => {
+  return (
+    <PremiumGuard message="Upgrade to view reports">
+      <ReportsContent />
+    </PremiumGuard>
+  );
+};
+
+export default Reports;
