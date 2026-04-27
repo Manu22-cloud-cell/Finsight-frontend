@@ -6,8 +6,18 @@ import PremiumGuard from "../components/PremiumGuard";
 const AlertsContent = () => {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   const unreadCount = alerts.filter((a) => !a.isRead).length;
+
+  useEffect(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("user"));
+      setUser(u);
+    } catch (err) {
+      setUser(null);
+    }
+  }, []);
 
   const fetchAlerts = async () => {
     try {
@@ -26,6 +36,14 @@ const AlertsContent = () => {
     }
   };
 
+  useEffect(() => {
+    if (user?.isPremium) {
+      fetchAlerts();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
   const markAsRead = async (id) => {
     try {
       await API.put(`/alerts/${id}/read`);
@@ -39,10 +57,6 @@ const AlertsContent = () => {
       toastApiError(err);
     }
   };
-
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
 
   if (loading) {
     return (
