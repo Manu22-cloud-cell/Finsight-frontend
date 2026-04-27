@@ -37,7 +37,9 @@ const AlertsContent = () => {
   };
 
   useEffect(() => {
-    if (user?.isPremium) {
+    if (!user) return;
+
+    if (user.isPremium) {
       fetchAlerts();
     } else {
       setLoading(false);

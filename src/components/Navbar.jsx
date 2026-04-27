@@ -99,6 +99,8 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
+    if (!user?.isPremium) return; 
+
     const fetchAlerts = async () => {
       try {
         const res = await API.get("/alerts");
@@ -112,11 +114,10 @@ const Navbar = () => {
 
     fetchAlerts();
 
-    // refetch every time page changes
     const interval = setInterval(fetchAlerts, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   return (
 
