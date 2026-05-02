@@ -20,6 +20,9 @@ const PredictionCard = ({ prediction }) => {
 
   const predictedPercent = prediction.predictedUsagePercent || 0;
 
+  console.log("PREDICTION DATA:", prediction);
+  console.log("USED:", usedPercent);
+
   return (
     <div className="card">
       <h3>🔮 Smart Insights</h3>
