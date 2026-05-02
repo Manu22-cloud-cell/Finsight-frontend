@@ -16,14 +16,9 @@ const PredictionCard = ({ prediction }) => {
 
   const status = getStatus();
 
-  // Calculate budget usage %
-  const totalBudget =
-    prediction.predictedExpense + prediction.remainingBudget;
+  const usedPercent = prediction.usagePercent || 0;
 
-  const usedPercent =
-    totalBudget > 0
-      ? (prediction.predictedExpense / totalBudget) * 100
-      : 0;
+  const predictedPercent = prediction.predictedUsagePercent || 0;
 
   return (
     <div className="card">
@@ -87,10 +82,10 @@ const PredictionCard = ({ prediction }) => {
         </div>
       </div>
 
-      {/* Progress Bar */}
+      {/* CURRENT USAGE (Corrected) */}
       <div style={{ marginTop: "16px" }}>
         <p style={{ fontSize: "12px", color: "#777", marginBottom: "6px" }}>
-          Budget Usage
+          Budget Usage (Current)
         </p>
 
         <div
@@ -114,6 +109,27 @@ const PredictionCard = ({ prediction }) => {
 
         <p style={{ fontSize: "12px", marginTop: "4px" }}>
           {usedPercent.toFixed(0)}% used
+        </p>
+      </div>
+
+      {/* PREDICTION INSIGHT */}
+      <div style={{ marginTop: "10px" }}>
+        <p style={{ fontSize: "12px", color: "#777" }}>
+          📊 Expected Usage (End of Month)
+        </p>
+        <p
+          style={{
+            fontSize: "13px",
+            fontWeight: "500",
+            color:
+              predictedPercent > 100
+                ? "#c62828"
+                : predictedPercent > 80
+                  ? "#ff9800"
+                  : "#2e7d32",
+          }}
+        >
+          {predictedPercent.toFixed(0)}% of budget
         </p>
       </div>
 
