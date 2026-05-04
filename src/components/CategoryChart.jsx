@@ -66,9 +66,10 @@ const CategoryChart = ({ data }) => {
                         dataKey="value"
                         nameKey="name"
                         outerRadius="80%"
-                        minAngle={3} // ✅ ensures visibility
+                        minAngle={5}
+                        paddingAngle={2}
                         label={({ percent }) =>
-                            percent > 0.04 ? `${(percent * 100).toFixed(0)}%` : ""
+                            percent > 0.02 ? `${(percent * 100).toFixed(0)}%` : ""
                         }
                         labelLine={true}
                     >
