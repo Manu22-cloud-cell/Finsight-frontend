@@ -31,9 +31,9 @@ const ReportsContent = () => {
   const formatCurrency = (v) =>
     `₹${(v || 0).toLocaleString("en-IN")}`;
 
+  // ================= FETCH REPORT =================
   const fetchReports = async () => {
     try {
-
       if (type === "daily" && !date) {
         return toastInfo("Please select a date");
       }
@@ -45,13 +45,13 @@ const ReportsContent = () => {
       setLoading(true);
 
       let query = `/reports?type=${type}`;
-      if (type === "daily" && date) query += `&date=${date}`;
+      if (type === "daily") query += `&date=${date}`;
       if (type === "monthly") query += `&month=${month}&year=${year}`;
       if (type === "yearly") query += `&year=${year}`;
 
       const res = await API.get(query);
 
-      setData(res.data.data.transactions || res.data.data.data);
+      setData(res.data.data.transactions || res.data.data.data || []);
       setTotals(res.data.data.totals || {});
     } catch (err) {
       toastApiError(err);
@@ -60,6 +60,7 @@ const ReportsContent = () => {
     }
   };
 
+  // ================= CATEGORY =================
   const fetchCategoryData = async () => {
     try {
       let query = `/analytics/category-filter?type=${type}`;
@@ -68,21 +69,23 @@ const ReportsContent = () => {
       if (type === "yearly") query += `&year=${year}`;
 
       const res = await API.get(query);
-      setCategoryData(res.data.data);
+      setCategoryData(res.data.data || {});
     } catch (err) {
       toastApiError(err);
     }
   };
 
+  // ================= HISTORY =================
   const fetchHistory = async () => {
     try {
       const res = await API.get("/reports/history");
-      setHistory(res.data.data);
+      setHistory(res.data.data || []);
     } catch (err) {
       toastApiError(err);
     }
   };
 
+  // ================= DOWNLOAD =================
   const downloadReport = async () => {
     try {
       const res = await API.get(`/reports/download?type=${type}`);
@@ -94,7 +97,16 @@ const ReportsContent = () => {
     }
   };
 
+  // ================= AUTO FETCH (IMPROVED) =================
   useEffect(() => {
+    // prevent unnecessary API calls
+    if (
+      (type === "daily" && !date) ||
+      (type === "monthly" && !month)
+    ) {
+      return;
+    }
+
     fetchReports();
     fetchCategoryData();
   }, [type, date, month, year]);
@@ -104,10 +116,10 @@ const ReportsContent = () => {
   }, []);
 
   return (
-    <div className="dashboard">
+    <div className="dashboard reports-page">
       <h2>📊 Reports</h2>
 
-      {/* Filters */}
+      {/* ================= FILTERS ================= */}
       <div className="card">
         <h3>Generate Report</h3>
 
@@ -139,7 +151,7 @@ const ReportsContent = () => {
               <input
                 type="number"
                 value={year}
-                onChange={(e) => setYear(e.target.value)}
+                onChange={(e) => setYear(Number(e.target.value))}
               />
             </>
           )}
@@ -148,18 +160,21 @@ const ReportsContent = () => {
             <input
               type="number"
               value={year}
-              onChange={(e) => setYear(e.target.value)}
+              onChange={(e) => setYear(Number(e.target.value))}
             />
           )}
 
           <button onClick={fetchReports} disabled={loading}>
             {loading ? "Loading..." : "🔍 Fetch"}
           </button>
-          <button onClick={downloadReport}>⬇️ Download CSV</button>
+
+          <button onClick={downloadReport}>
+            ⬇️ Download CSV
+          </button>
         </div>
       </div>
 
-      {/* Totals */}
+      {/* ================= TOTALS ================= */}
       <div className="grid grid-3" style={{ marginTop: "20px" }}>
         <div className="card">
           <p style={{ fontSize: "12px", color: "#777" }}>💰 Total Income</p>
@@ -185,24 +200,27 @@ const ReportsContent = () => {
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-2" style={{ marginTop: "20px" }}>
+      {/* ================= CHARTS ================= */}
+      <div className="grid grid-2" style={{ marginTop: "20px", gap: "20px" }}>
         <CategoryChart data={categoryData} />
 
-        {type === "yearly" && (
+        {type === "yearly" && data.length > 0 && (
           <TrendChart
             data={Object.fromEntries(
               data.map((item) => [
-                monthNames[item.month - 1],
-                { income: item.income, expense: item.expense },
+                `${year}-${item.month}`,
+                {
+                  income: item.income,
+                  expense: item.expense,
+                },
               ])
             )}
           />
         )}
       </div>
 
-      {/* Table */}
-      <div className="card">
+      {/* ================= TABLE ================= */}
+      <div className="card" style={{ marginTop: "20px" }}>
         <h3>Report Data</h3>
 
         {loading ? (
@@ -233,7 +251,7 @@ const ReportsContent = () => {
                   <td style={{ color: "#c62828" }}>
                     {formatCurrency(item.expense)}
                   </td>
-                  <td style={{ fontWeight: "500" }}>
+                  <td>
                     {formatCurrency(item.income - item.expense)}
                   </td>
                 </tr>
@@ -273,9 +291,9 @@ const ReportsContent = () => {
         )}
       </div>
 
-      {/* History */}
-      <div className="card">
-        <h3>Download History</h3>
+      {/* ================= HISTORY ================= */}
+      <div className="card" style={{ marginTop: "20px" }}>
+        <h3>Reports Download History</h3>
 
         {history.length === 0 ? (
           <p>No reports downloaded yet</p>

@@ -105,6 +105,10 @@ label {
   .grid-3 {
     grid-template-columns: 1fr;
   }
+
+  .reports-page .card {
+    padding: 15px;
+  }
 }
 
 /* Card */
@@ -122,6 +126,22 @@ label {
 .card p {
   font-size: 18px;
   font-weight: bold;
+}
+
+
+/* Reports page*/
+.reports-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reports-page .grid {
+  gap: 20px;
+}
+
+.reports-page .card {
+  margin: 0;
 }
 
 /* Table */
